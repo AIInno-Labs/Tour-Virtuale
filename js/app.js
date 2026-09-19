@@ -881,6 +881,7 @@
 
   /* ---------- start ---------- */
   $('#brandName').textContent = T.name;
+  $('#areasBrandName').textContent = T.name;
   buildMenu();
   buildPlan();
   applyLang();
