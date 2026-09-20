@@ -80,7 +80,19 @@
     var source = Marzipano.ImageUrlSource.fromString(TILES_DIR + id + '/{z}/{f}/{y}/{x}.jpg');
     var view = new Marzipano.RectilinearView({ yaw: 0, pitch: 0, fov: defaultFov() }, limiter);
     var scene = viewer.createScene({ source: source, geometry: geometry, view: view, pinFirstLevel: true });
-    d.links.forEach(function (l) { addHotspot(scene, l.yaw, l.pitch, linkElement(l)); });
+    var arrows = d.links.map(function (l) {
+      var el = linkElement(l);
+      el._yaw = rad(l.yaw);
+      addHotspot(scene, l.yaw, l.pitch, el);
+      return el;
+    });
+    // Each marker's arrow points the way its hotspot lies, relative to where the viewer is looking.
+    function aim() {
+      var yaw = view.yaw();
+      arrows.forEach(function (el) { el.style.setProperty('--a', deg(el._yaw - yaw).toFixed(1) + 'deg'); });
+    }
+    view.addEventListener('change', aim);
+    aim();
     return (cache[id] = { data: d, scene: scene });
   }
 
@@ -88,17 +100,14 @@
     scene.hotspotContainer().createHotspot(el, { yaw: rad(yaw), pitch: rad(pitch) });
   }
 
-  var ARROW = '<svg viewBox="0 0 22 28" aria-hidden="true"><path d="M8 1h6v13h6.2L11 27 1.8 14H8z"/></svg>';
-
   function hotspotBase(kind, o) {
     var el = document.createElement('div');
     el.className = 'hs ' + kind;
     el.tabIndex = 0;
     el.setAttribute('role', 'button');
     el.setAttribute('aria-label', o.label);
-    el.style.setProperty('--d', (-Math.random() * 1.2).toFixed(2) + 's');
     el.innerHTML = '<span class="hs-card"><span class="thumb"><img alt=""></span><b></b><small></small></span>' +
-      '<span class="hs-ground"></span><span class="hs-arrow">' + ARROW + '</span>';
+      '<span class="hs-pin"><span class="hs-arrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5L20.5 21 12 16.6 3.5 21z"/></svg></span></span>';
     el.querySelector('b').textContent = o.label;
     el.querySelector('small').textContent = o.sub;
     var img = el.querySelector('img');
@@ -137,7 +146,7 @@
     var dest = byId[l.to];
     var el = hotspotBase('hs-link', { label: nm(dest), sub: nm(chapterById[dest.chapter]), thumb: 'thumbs/' + dest.id + '.jpg', prefetch: dest.id });
     el.addEventListener('click', function () {
-      var r = el.querySelector('.hs-arrow').getBoundingClientRect();
+      var r = el.querySelector('.hs-pin').getBoundingClientRect();
       goTo(l.to, { link: l, origin: { x: r.left + r.width / 2, y: r.top + r.height / 2 } });
     });
     labelers.push(function () {

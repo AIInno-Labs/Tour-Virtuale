@@ -170,16 +170,13 @@ i { display: block; width: 20px; height: 20px; background: currentColor; -webkit
 #zoom button:hover { background: var(--glass-strong); }
 #zoom button + button { border-left: 1px solid var(--hair); }
 
-/* ---------- hotspots: a bobbing marker, and a thumbnail card on hover ---------- */
-.hs { position: absolute; width: 46px; height: 62px; margin: -62px 0 0 -23px; cursor: pointer; display: flex; justify-content: center; align-items: flex-end; }
-.hs-arrow { position: absolute; left: 50%; bottom: 11px; display: block; width: 22px; height: 28px; margin-left: -11px; transform-origin: 50% 100%; animation: bob 1.2s ease-in-out infinite; animation-delay: var(--d, 0s);
-  filter: drop-shadow(0 5px 6px rgba(0, 0, 0, .42)); transition: scale .25s cubic-bezier(.3, .7, .2, 1); }
-.hs-arrow svg { display: block; width: 100%; height: 100%; fill: var(--chalk); stroke: rgba(13, 31, 45, .6); stroke-width: 1.3; stroke-linejoin: round; transition: fill .2s; }
-.hs-ground { position: absolute; left: 50%; bottom: 1px; width: 24px; height: 7px; margin-left: -12px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(0, 0, 0, .5), rgba(0, 0, 0, 0) 70%); animation: shadow 1.2s ease-in-out infinite; animation-delay: var(--d, 0s); }
-@keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
-@keyframes shadow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.68); opacity: .55; } }
-.hs:hover .hs-arrow, .hs:focus-visible .hs-arrow { scale: 1.28; }
-.hs:hover .hs-arrow svg, .hs:focus-visible .hs-arrow svg { fill: var(--lagoon); }
+/* ---------- hotspots: a Google Maps-style direction marker lying on the floor, and a thumbnail card on hover ---------- */
+.hs { position: absolute; width: 56px; height: 56px; margin: -28px 0 0 -28px; cursor: pointer; perspective: 270px; }
+.hs-pin { position: absolute; inset: 2px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, .4); rotate: 1 0 0 55deg; transition: box-shadow .2s; }
+.hs-arrow { position: absolute; inset: 0; display: grid; place-items: center; rotate: var(--a, 0deg); }
+.hs-arrow svg { display: block; width: 62%; height: 62%; fill: #4285f4; transition: fill .2s; }
+.hs:hover .hs-pin, .hs:focus-visible .hs-pin { box-shadow: 0 0 0 3px rgba(66, 133, 244, .4), 0 3px 8px rgba(0, 0, 0, .4); }
+.hs:hover .hs-arrow svg, .hs:focus-visible .hs-arrow svg { fill: #1a73e8; }
 .hs:focus-visible { outline: none; }
 
 .hs-card { position: absolute; left: 50%; bottom: calc(100% + 8px); width: 196px; padding: 6px 6px 12px; border-radius: 16px; text-align: left;
@@ -198,7 +195,6 @@ i { display: block; width: 20px; height: 20px; background: currentColor; -webkit
 .hs.flip:hover .hs-card, .hs.flip:focus-visible .hs-card { transform: translate(calc(-50% + var(--dx, 0px)), 0) scale(1); }
 .hs.flip .hs-card::after { bottom: auto; top: -6px; rotate: 225deg; }
 @media (hover: none) {
-  .hs { margin-top: -54px; height: 54px; }
   .hs-card { width: auto; padding: 5px 12px; border-radius: 999px; opacity: 1; transform: translate(-50%, 0); bottom: calc(100% + 4px); }
   .hs-card .thumb, .hs-card small, .hs-card::after { display: none; }
   .hs-card b { margin: 0; font-size: 15px; white-space: nowrap; }
