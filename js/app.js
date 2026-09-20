@@ -80,25 +80,23 @@
     var source = Marzipano.ImageUrlSource.fromString(TILES_DIR + id + '/{z}/{f}/{y}/{x}.jpg');
     var view = new Marzipano.RectilinearView({ yaw: 0, pitch: 0, fov: defaultFov() }, limiter);
     var scene = viewer.createScene({ source: source, geometry: geometry, view: view, pinFirstLevel: true });
-    var arrows = d.links.map(function (l) {
-      var el = linkElement(l);
-      el._yaw = rad(l.yaw);
-      addHotspot(scene, l.yaw, l.pitch, el);
-      return el;
-    });
-    // Each marker's arrow points the way its hotspot lies, relative to where the viewer is looking.
-    function aim() {
-      var yaw = view.yaw();
-      arrows.forEach(function (el) { el.style.setProperty('--a', deg(el._yaw - yaw).toFixed(1) + 'deg'); });
-    }
-    view.addEventListener('change', aim);
-    aim();
+    d.links.forEach(function (l) { addHotspot(scene, l.yaw, l.pitch, linkElement(l)); });
     return (cache[id] = { data: d, scene: scene });
   }
 
   function addHotspot(scene, yaw, pitch, el) {
     scene.hotspotContainer().createHotspot(el, { yaw: rad(yaw), pitch: rad(pitch) });
   }
+
+  // Hotspot badge: a ring of beads and a four-pointed star, echoing the emblem in the logo.
+  var BADGE = (function () {
+    var beads = '';
+    for (var i = 0; i < 20; i++) {
+      var a = i * Math.PI / 10;
+      beads += '<circle cx="' + (24 + 18.5 * Math.cos(a)).toFixed(2) + '" cy="' + (24 + 18.5 * Math.sin(a)).toFixed(2) + '" r="1.1"/>';
+    }
+    return '<svg viewBox="0 0 48 48" aria-hidden="true"><g class="hs-beads">' + beads + '</g><path class="hs-star" d="M24 15l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/></svg>';
+  })();
 
   function hotspotBase(kind, o) {
     var el = document.createElement('div');
@@ -107,7 +105,7 @@
     el.setAttribute('role', 'button');
     el.setAttribute('aria-label', o.label);
     el.innerHTML = '<span class="hs-card"><span class="thumb"><img alt=""></span><b></b><small></small></span>' +
-      '<span class="hs-pin"><span class="hs-arrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5L20.5 21 12 16.6 3.5 21z"/></svg></span></span>';
+      '<span class="hs-pin">' + BADGE + '</span>';
     el.querySelector('b').textContent = o.label;
     el.querySelector('small').textContent = o.sub;
     var img = el.querySelector('img');

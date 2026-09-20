@@ -170,13 +170,23 @@ i { display: block; width: 20px; height: 20px; background: currentColor; -webkit
 #zoom button:hover { background: var(--glass-strong); }
 #zoom button + button { border-left: 1px solid var(--hair); }
 
-/* ---------- hotspots: a Google Maps-style direction marker lying on the floor, and a thumbnail card on hover ---------- */
-.hs { position: absolute; width: 56px; height: 56px; margin: -28px 0 0 -28px; cursor: pointer; perspective: 270px; }
-.hs-pin { position: absolute; inset: 2px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, .4); rotate: 1 0 0 55deg; transition: box-shadow .2s; }
-.hs-arrow { position: absolute; inset: 0; display: grid; place-items: center; rotate: var(--a, 0deg); }
-.hs-arrow svg { display: block; width: 62%; height: 62%; fill: #4285f4; transition: fill .2s; }
-.hs:hover .hs-pin, .hs:focus-visible .hs-pin { box-shadow: 0 0 0 3px rgba(66, 133, 244, .4), 0 3px 8px rgba(0, 0, 0, .4); }
-.hs:hover .hs-arrow svg, .hs:focus-visible .hs-arrow svg { fill: #1a73e8; }
+/* ---------- hotspots: a small white-silver badge (bead ring and star, after the logo) with pulse rings, and a thumbnail card on hover ---------- */
+.hs { position: absolute; width: 38px; height: 38px; margin: -19px 0 0 -19px; cursor: pointer; }
+/* Two solid rings spread out from the badge and fade, half a cycle apart */
+.hs::before, .hs::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--chalk); pointer-events: none; opacity: 0; animation: hsPulse 3s ease-out infinite; }
+.hs::after { animation-delay: 1.5s; }
+.hs-card { z-index: 2; }
+.hs-pin { position: absolute; z-index: 1; inset: 3px; border-radius: 50%; background: linear-gradient(145deg, #fff, #c5ced2); border: 1.5px solid rgba(255, 255, 255, .9); box-shadow: 0 2px 8px rgba(0, 0, 0, .45), inset 0 -3px 5px rgba(13, 31, 45, .18); transition: background .2s; }
+.hs-pin svg { display: block; width: 100%; height: 100%; fill: var(--tide); transition: fill .2s; }
+.hs-beads { transform-origin: 24px 24px; animation: hsBeads 24s linear infinite; }
+.hs-star { transform-origin: 24px 24px; animation: hsGlint 4s ease-in-out infinite; }
+.hs:hover .hs-pin, .hs:focus-visible .hs-pin { background: var(--lagoon); }
+.hs:hover::before, .hs:hover::after, .hs:focus-visible::before, .hs:focus-visible::after { background: var(--lagoon); }
+.hs:hover .hs-pin svg, .hs:focus-visible .hs-pin svg { fill: var(--abyss); }
+@keyframes hsPulse { 0% { scale: 1; opacity: .55; } 100% { scale: 2.6; opacity: 0; } }
+@keyframes hsBeads { to { transform: rotate(360deg); } }
+@keyframes hsGlint { 0%, 78%, 100% { scale: 1; } 89% { scale: 1.25; } }
+@media (prefers-reduced-motion: reduce) { .hs::before, .hs::after, .hs-beads, .hs-star { animation: none; } }
 .hs:focus-visible { outline: none; }
 
 .hs-card { position: absolute; left: 50%; bottom: calc(100% + 8px); width: 196px; padding: 6px 6px 12px; border-radius: 16px; text-align: left;
