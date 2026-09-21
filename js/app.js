@@ -8,7 +8,7 @@
   var EDIT = /[?&]edit\b/.test(location.search);
   var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var TILES_DIR = 'tiles/';
+  var TILES_DIR = 'assets/tiles/';
   var FACE_SIZE = 3072;
   var LEVELS = [
     { tileSize: 512, size: 512, fallbackOnly: true },
@@ -148,7 +148,7 @@
     var dest = byId[l.to];
     // A link can carry its own name (label / labelIt); otherwise it shows the name of the place it leads to.
     function linkName() { return (lang === 'it' && l.labelIt) || l.label || nm(dest); }
-    var el = hotspotBase('hs-link', { label: linkName(), sub: nm(chapterById[dest.chapter]), thumb: 'thumbs/' + dest.id + '.jpg', prefetch: dest.id });
+    var el = hotspotBase('hs-link', { label: linkName(), sub: nm(chapterById[dest.chapter]), thumb: 'assets/thumbs/' + dest.id + '.jpg', prefetch: dest.id });
     el.addEventListener('click', function () {
       var r = el.querySelector('.hs-pin').getBoundingClientRect();
       goTo(l.to, { link: l, origin: { x: r.left + r.width / 2, y: r.top + r.height / 2 } });
@@ -430,7 +430,7 @@
         b.className = 'stop';
         b.dataset.id = s.id;
         b.innerHTML = '<img loading="lazy" alt="" width="76" height="46"><b></b><small></small>';
-        b.querySelector('img').src = 'thumbs/' + s.id + '.jpg';
+        b.querySelector('img').src = 'assets/thumbs/' + s.id + '.jpg';
         b.querySelector('b').textContent = nm(s);
         b.querySelector('small').textContent = ('0' + (s.index + 1)).slice(-2);
         b.addEventListener('click', function () {
@@ -818,7 +818,7 @@
       b.type = 'button';
       b.dataset.gal = s.id;
       b.innerHTML = '<img alt="" width="64" height="38"><span></span><small></small>';
-      b.querySelector('img').src = 'thumbs/' + s.id + '.jpg';
+      b.querySelector('img').src = 'assets/thumbs/' + s.id + '.jpg';
       gList.appendChild(b);
     });
     if (T.map && T.map.image) $('[data-act="plan"]').hidden = false;

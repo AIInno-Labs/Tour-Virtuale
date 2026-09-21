@@ -30,13 +30,13 @@ then open http://localhost:8000 (or `http://localhost:8000/#hall-2` to open a pl
 | `js/i18n.js` | Interface texts in English and Italian | sometimes |
 | `js/app.js` | The viewer logic (navigation, transition, menu, gallery, language, URLs) | rarely |
 | `css/style.css` | All styling. Colours and fonts are variables at the top | sometimes |
-| `tiles/` | The panoramas, cut into small tiles (one folder per place) | generated |
-| `thumbs/` | Small preview picture per place (menu list and hotspot cards) | generated |
-| `gallery/<place-id>/` | Extra photos per place (`01.jpg`, `02.jpg` ...) | **yes** |
+| `assets/tiles/` | The panoramas, cut into small tiles (one folder per place) | generated |
+| `assets/thumbs/` | Small preview picture per place (menu list and hotspot cards) | generated |
+| `assets/gallery/<place-id>/` | Extra photos per place (`01.jpg`, `02.jpg` ...) | **yes** |
 | `assets/` | Logo, emblem, browser-tab icon | when the logo changes |
-| `fonts/` | Bodoni Moda, Instrument Sans, IBM Plex Mono (self-hosted) | no |
+| `assets/fonts/` | Bodoni Moda, Instrument Sans, IBM Plex Mono (self-hosted) | no |
 | `vendor/marzipano.js` | The viewer library, unmodified | no |
-| `tools/build_tiles.py` | Turns the original panoramas into `tiles/` and `thumbs/` (runs on your computer only) | no |
+| `tools/build_tiles.py` | Turns the original panoramas into `assets/tiles/` and `assets/thumbs/` (runs on your computer only) | no |
 
 The original 12000 px panoramas (`images/`, about 2 GB) are **not** part of the website and are kept outside the repository.
 
@@ -78,12 +78,12 @@ Almost everything is in **`js/scenes.js`**. After any change, do a hard refresh 
 { id: "18quercia2", chapter: "garden", name: "Oak Tree 2", nameIt: "Quercia 2",
   view: { yaw: -171, pitch: -12 },
   links: [{ to: "19sala1", yaw: -174, pitch: 13 }, { to: "16giardino2", yaw: 94, pitch: 19 }],
-  gallery: { folder: "gallery/11torre3", count: 10 } }
+  gallery: { folder: "assets/gallery/11torre3", count: 10 } }
 ```
 
 | Field | Meaning |
 |---|---|
-| `id` | Must equal the tile folder name in `tiles/`. It is the panorama file name in lowercase, without spaces, underscores or extension (`17_Quercia1.jpg` -> `17quercia1`). |
+| `id` | Must equal the tile folder name in `assets/tiles/`. It is the panorama file name in lowercase, without spaces, underscores or extension (`17_Quercia1.jpg` -> `17quercia1`). |
 | `chapter` | Key from `chapters` (groups the place in the Areas list). |
 | `name` / `nameIt` | English / Italian title. If `nameIt` is missing the English name is shown. Both also become the share link. |
 | `view` | Direction the visitor faces on arrival, in degrees. `yaw` 0 = centre of the picture, positive = right. `pitch` 0 = horizon, **positive = down**, negative = up. |
@@ -100,7 +100,7 @@ Fields that still appear in the file but are **no longer used**: `gallery.hotspo
 2. `pip install opencv-python numpy` (once), then `python tools/build_tiles.py`.
    Only new files are processed. `--force` rebuilds everything; `python tools/build_tiles.py 05Pineta1` rebuilds one file.
 3. Add the place to `js/scenes.js` (see above) and link to it from neighbouring places.
-4. Do **not** commit `images/`; only `tiles/` and `thumbs/` go online.
+4. Do **not** commit `images/`; only `assets/tiles/` and `assets/thumbs/` go online.
 
 The viewer expects the tile layout the script produces (three levels: 512, 1536, 3072 px per cube face). If you change `LEVELS`
 in `tools/build_tiles.py` you must change `LEVELS` and `FACE_SIZE` at the top of `js/app.js` to match.
@@ -112,9 +112,9 @@ clipboard and shown on screen. Paste it into the place's `links` and fill in `to
 
 ### Photo galleries
 
-Each gallery reads `gallery/<place-id>/01.jpg ... 10.jpg`. Missing numbers are skipped, so 4 photos work fine.
+Each gallery reads `assets/gallery/<place-id>/01.jpg ... 10.jpg`. Missing numbers are skipped, so 4 photos work fine.
 Landscape and portrait both work and nothing is cropped. To give another place a gallery, add
-`gallery: { folder: "gallery/<place-id>", count: 10 }` to it and put the photos in that folder.
+`gallery: { folder: "assets/gallery/<place-id>", count: 10 }` to it and put the photos in that folder.
 **The photos in the repository right now are stand-ins** rendered from the panoramas - replace them with the real photos using
 the same file names (JPG, about 1600 px on the long side).
 
@@ -155,10 +155,10 @@ each place in `js/scenes.js`, and switch the tile source in `getScene` in `js/ap
 Upload these to any static host:
 
 ```
-index.html   css/   js/   vendor/   fonts/   assets/   tiles/   thumbs/   gallery/
+index.html   css/   js/   vendor/   assets/  (fonts, tiles, thumbs, gallery and the logos)
 ```
 
-(about 580 MB, almost all of it `tiles/`). Do **not** upload `images/`, `tools/` or the client brief.
+(about 580 MB, almost all of it `assets/tiles/`). Do **not** upload `images/`, `tools/` or the client brief.
 
 - **Vercel**: import the repository, framework "Other", no build command, output directory = root.
 - **GitHub Pages**: Settings -> Pages -> branch `main`, folder `/ (root)`. All paths are relative and share links use `#`, so
@@ -186,7 +186,7 @@ index.html   css/   js/   vendor/   fonts/   assets/   tiles/   thumbs/   galler
 - **A change does not show up**: the browser cached the old files. Hard refresh (Ctrl+F5). When you deploy an update, also bump the
   `?v=` number on the three script tags and the stylesheet link in `index.html` (currently `?v=32`) so visitors get the new files.
 - **Blank screen / no tiles when opening `index.html`**: use a local server (section 1).
-- **A place does not appear in the menu**: its `id` does not match a folder in `tiles/`, or it is marked `pending: true`.
+- **A place does not appear in the menu**: its `id` does not match a folder in `assets/tiles/`, or it is marked `pending: true`.
 - **An arrow leads nowhere**: the `to` id does not exist or the target is `pending`; hidden targets are skipped silently.
 - **Arrows jump or hotspots look shifted after re-tiling**: `LEVELS` / `FACE_SIZE` in `js/app.js` must match `tools/build_tiles.py`.
 - **The transition feels too fast / slow or the trail too strong**: `PUSH`, `MAXS` and `MAXT` in the `goTo` function of `js/app.js`.

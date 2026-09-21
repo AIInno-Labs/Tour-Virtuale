@@ -1,6 +1,6 @@
 """
-Convert equirectangular 360 JPGs (images/) into Marzipano cube-map tiles (tiles/)
-and small thumbnails (thumbs/).
+Convert equirectangular 360 JPGs (images/) into Marzipano cube-map tiles (assets/tiles/)
+and small thumbnails (assets/thumbs/).
 
 Usage:
     python tools/build_tiles.py              # process only new images
@@ -20,8 +20,8 @@ import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "images")
-OUT_TILES = os.path.join(ROOT, "tiles")
-OUT_THUMBS = os.path.join(ROOT, "thumbs")
+OUT_TILES = os.path.join(ROOT, "assets", "tiles")
+OUT_THUMBS = os.path.join(ROOT, "assets", "thumbs")
 OUT_PREVIEW = os.environ.get("PREVIEW_DIR")  # optional: low-res equirect previews
 
 # (face size in px, tile size in px). Index in this list == {z} in the tile URL.

@@ -2,7 +2,7 @@
  * TOUR CONTENT - the only file you normally need to edit.
  *
  * Scene fields
- *   id        must match the folder name in tiles/ (made by tools/build_tiles.py)
+ *   id        must match the folder name in assets/tiles/ (made by tools/build_tiles.py)
  *   chapter   key from "chapters" below (groups scenes in the Areas menu)
  *   name      title shown on screen and on the hotspot that leads here
  *   view      opening direction in degrees: yaw (0 = image centre, positive = right) and
@@ -87,7 +87,7 @@ window.TOUR = {
     { id: "11torre3", chapter: "tower", name: "Tower 3", nameIt: "Torre 3",
       view: { yaw: 12, pitch: 3 },
       links: [{ to: "10torre2", yaw: 12, pitch: 5 }, { to: "12torredrone", yaw: 172, pitch: -2, label: "Tower 4", labelIt: "Torre 4" }],
-      gallery: { folder: "gallery/11torre3", count: 10, hotspot: { yaw: 6, pitch: 10 } } },
+      gallery: { folder: "assets/gallery/11torre3", count: 10, hotspot: { yaw: 6, pitch: 10 } } },
     { id: "12torredrone", chapter: "tower", name: "Aerial View", nameIt: "Vista aerea",
       view: { yaw: -72, pitch: 32 },
       links: [{ to: "11torre3", yaw: -132, pitch: 37 }, { to: "13ingressoroma", yaw: -11, pitch: 37 }, { to: "34terrazza2", yaw: -35, pitch: 29 }] },
