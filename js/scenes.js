@@ -80,7 +80,7 @@ window.TOUR = {
       links: [{ to: "07pineta1", yaw: -110, pitch: 11 }, { to: "05percorsotorre2", yaw: -180, pitch: 8 }, { to: "10torre2", yaw: -76, pitch: 6 }] },
     { id: "09torre1", chapter: "tower", name: "Tower 1", nameIt: "Torre 1",
       view: { yaw: 132, pitch: 10 },
-      links: [{ to: "10torre2", yaw: 111, pitch: 20 }, { to: "07pineta1", yaw: -121, pitch: 19 }] },
+      links: [{ to: "10torre2", yaw: 111, pitch: 20 }, { to: "07pineta1", yaw: -121, pitch: 3 }] },
     { id: "10torre2", chapter: "tower", name: "Tower 2", nameIt: "Torre 2",
       view: { yaw: 8, pitch: -19 },
       links: [{ to: "11torre3", yaw: -152, pitch: 33 }, { to: "07pineta1", yaw: -7, pitch: 4 }] },
