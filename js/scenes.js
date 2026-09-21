@@ -20,18 +20,19 @@ window.TOUR = {
   name: "Cala dei Balcani",
   tagline: "Virtual tour",
 
-  // The first screen. "scene" is the panorama shown behind it (12torredrone is a provisional drone shot).
+  // The first screen. "scene" is the panorama shown behind it; "aerial" is where the Menu's Aerial view goes.
   home: {
-    scene: "12torredrone",
-    view: { yaw: 70, pitch: 12 },
-    lead: "Walk the grounds: the *pine grove*, the old *stone tower*, the *vaulted halls* and the *terraces* above the sea.",
+    scene: "panohome",
+    aerial: "12torredrone",
+    view: { yaw: -35, pitch: 4 },
+    lead: "Stroll through the location: the *pine grove*, the ancient *Saracen Tower*, the *Cathedral Hall* and the rooms with a *view of the sea*.",
     start: "Start the walk",
-    leadIt: "Passeggia nella tenuta: la *pineta*, l'antica *torre di pietra*, le *sale a volta* e le *terrazze* sul mare.",
+    leadIt: "Passeggia nella location: la *pineta*, l'antica *Torre Saracena*, la *Sala Cattedrale* e gli ambienti con *vista sul mare*.",
     startScene: "01parcheggio"
   },
 
   // Contact details for the Inquire card and the Menu. DUMMY VALUES - replace with the real ones.
-  contact: { phone: "+39 000 000 0000", email: "info@example.com", hours: "Open every day, 9:00 to 19:00", hoursIt: "Aperto tutti i giorni, dalle 9:00 alle 19:00" },
+  contact: { phone: "+39 000 000 0000", email: "info@example.com", website: "https://www.example.com", hours: "Open every day, 9:00 to 19:00", hoursIt: "Aperto tutti i giorni, dalle 9:00 alle 19:00" },
 
   // Optional floor plan. Put the image in assets/ and give scenes a pin (x, y as % of the image).
   map: { image: null, pins: { /* "01parcheggio": { x: 12, y: 80 }, */ } },
@@ -50,9 +51,11 @@ window.TOUR = {
   ],
 
   scenes: [
+    // The picture behind the welcome screen only (homeOnly keeps it out of the Areas list and Previous / Next).
+    { id: "panohome", homeOnly: true, chapter: "arrival", name: "Home", nameIt: "Home", view: { yaw: -35, pitch: 4 }, links: [] },
     { id: "01parcheggio", chapter: "arrival", name: "Parking 1", nameIt: "Parcheggio 1",
       view: { yaw: 12, pitch: -8 },
-      links: [{ to: "02parcheggio", yaw: 4, pitch: 5 }, { to: "11torre3", yaw: 40, pitch: -13 }] },
+      links: [{ to: "02parcheggio", yaw: 4, pitch: 5 }, { to: "12torredrone", yaw: 40, pitch: -13 }] },
     { id: "02parcheggio", chapter: "arrival", name: "Parking 2", nameIt: "Parcheggio 2",
       view: { yaw: 15, pitch: -6 },
       links: [{ to: "03ingressotorre", yaw: -31, pitch: 5 }, { to: "01parcheggio", yaw: 144, pitch: 5 }] },
@@ -74,7 +77,7 @@ window.TOUR = {
       gallery: { folder: "gallery/07pineta1", count: 10, hotspot: { yaw: -100, pitch: 20 } } },
     { id: "08pineta2", chapter: "pine", name: "Pine Grove 2", nameIt: "Pineta 2",
       view: { yaw: -92, pitch: -7 },
-      links: [{ to: "07pineta1", yaw: -110, pitch: 11 }, { to: "05percorsotorre2", yaw: -180, pitch: 8 }, { to: "05percorsotorre2", yaw: -70, pitch: 3 }] },
+      links: [{ to: "07pineta1", yaw: -110, pitch: 11 }, { to: "05percorsotorre2", yaw: -180, pitch: 8 }, { to: "10torre2", yaw: -70, pitch: 3 }] },
     { id: "09torre1", chapter: "tower", name: "Tower 1", nameIt: "Torre 1",
       view: { yaw: 132, pitch: 10 },
       links: [{ to: "10torre2", yaw: 111, pitch: 20 }, { to: "07pineta1", yaw: -121, pitch: 19 }] },
@@ -83,11 +86,11 @@ window.TOUR = {
       links: [{ to: "11torre3", yaw: -152, pitch: 33 }, { to: "07pineta1", yaw: -7, pitch: 4 }] },
     { id: "11torre3", chapter: "tower", name: "Tower 3", nameIt: "Torre 3",
       view: { yaw: 177, pitch: -1 },
-      links: [{ to: "07pineta1", yaw: -12, pitch: 1 }, { to: "12torredrone", yaw: 172, pitch: -2 }],
+      links: [{ to: "10torre2", yaw: 12, pitch: 12 }, { to: "12torredrone", yaw: 172, pitch: -2 }],
       gallery: { folder: "gallery/11torre3", count: 10, hotspot: { yaw: 6, pitch: 10 } } },
     { id: "12torredrone", chapter: "tower", name: "Aerial View", nameIt: "Vista aerea",
-      view: { yaw: 141, pitch: 69 },
-      links: [{ to: "10torre2", yaw: -91, pitch: 79 }, { to: "13ingressoroma", yaw: 107, pitch: 39 }, { to: "01parcheggio", yaw: -40, pitch: 29 }] },
+      view: { yaw: -85, pitch: 32 },
+      links: [{ to: "11torre3", yaw: -133, pitch: 40 }, { to: "13ingressoroma", yaw: 106, pitch: 34 }, { to: "34terrazza2", yaw: -42, pitch: 28 }] },
     { id: "13ingressoroma", chapter: "entrance", name: "Roma Entrance", nameIt: "Ingresso Roma",
       view: { yaw: 10, pitch: -19 },
       links: [{ to: "12torredrone", yaw: -95, pitch: -26 }, { to: "14atrio1", yaw: 5, pitch: 12 }] },
@@ -99,7 +102,7 @@ window.TOUR = {
       links: [{ to: "16giardino2", yaw: 97, pitch: 6 }, { to: "14atrio1", yaw: -5, pitch: 3 }] },
     { id: "16giardino2", chapter: "garden", name: "Garden 2", nameIt: "Giardino 2",
       view: { yaw: 130, pitch: -15 },
-      links: [{ to: "15giardino1", yaw: 26, pitch: 5 }, { to: "17quercia1", yaw: 84, pitch: 8 }, { to: "18quercia2", yaw: 168, pitch: 2 }] },
+      links: [{ to: "15giardino1", yaw: 26, pitch: 5 }, { to: "17quercia1", yaw: 84, pitch: 8 }, { to: "18quercia2", yaw: 168, pitch: 2 }, { to: "23spalliera1", yaw: 76, pitch: 24 }] },
     { id: "17quercia1", chapter: "garden", name: "Oak Tree 1", nameIt: "Quercia 1",
       view: { yaw: 16, pitch: -12 },
       links: [{ to: "18quercia2", yaw: -24, pitch: 8 }, { to: "16giardino2", yaw: 51, pitch: 11 }, { to: "14atrio1", yaw: -179, pitch: 12 }] },
@@ -164,13 +167,13 @@ window.TOUR = {
     { id: "35terrazza3", chapter: "terraces", name: "Terrace 3", nameIt: "Terrazza 3",
       view: { yaw: 2, pitch: 3 },
       links: [{ to: "32scalasx", yaw: 51, pitch: 9 }, { to: "34terrazza2", yaw: -49, pitch: 10 }] },
-    { id: "36terrazza3", chapter: "terraces", name: "Terrace 3b", nameIt: "Terrazza 3b",
+    { id: "36terrazza3", chapter: "terraces", name: "Terrace 5", nameIt: "Terrazza 5",
       view: { yaw: 2, pitch: -1 },
       links: [{ to: "34terrazza2", yaw: -177, pitch: 17 }, { to: "37terrazza4", yaw: -2, pitch: 13 }, { to: "31scaladx", yaw: -55, pitch: 6 }, { to: "32scalasx", yaw: 48, pitch: 6 }],
       gallery: { folder: "gallery/36terrazza3", count: 10, hotspot: { yaw: 10, pitch: 15 } } },
     { id: "37terrazza4", chapter: "terraces", name: "Terrace 4", nameIt: "Terrazza 4",
       view: { yaw: -179, pitch: -13 },
-      links: [{ to: "31scaladx", yaw: -107, pitch: 11 }, { to: "32scalasx", yaw: 103, pitch: 9 }, { to: "36terrazza3", yaw: 175, pitch: 9 }, { to: "10torre2", yaw: -178, pitch: -22 }] },
+      links: [{ to: "31scaladx", yaw: -107, pitch: 11 }, { to: "32scalasx", yaw: 103, pitch: 9 }, { to: "36terrazza3", yaw: 175, pitch: 9 }, { to: "12torredrone", yaw: -178, pitch: -22 }] },
     { id: "39tratturo1", chapter: "trail", name: "Drover's Trail 1", nameIt: "Tratturo 1",
       view: { yaw: 4, pitch: -5 },
       links: [{ to: "40tratturo2", yaw: 165, pitch: 0 }, { to: "28antipasti2", yaw: 7, pitch: 23 }] },

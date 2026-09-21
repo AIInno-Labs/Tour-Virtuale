@@ -80,6 +80,9 @@ i { display: block; width: 20px; height: 20px; background: currentColor; -webkit
 .tool.primary { height: 44px; padding: 0 20px 0 15px; font-weight: 600; background: var(--lagoon); color: var(--abyss); border-color: var(--lagoon); }
 .tool.primary:hover, .tool.primary[aria-expanded="true"] { background: var(--chalk); border-color: var(--chalk); }
 #btnMenu { height: 44px; padding: 0 16px 0 19px; }
+a.tool { text-decoration: none; }
+#btnWebsite { position: relative; }
+#btnWebsite i { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 10.5 12 3.5l8.5 7V19a1.5 1.5 0 0 1-1.5 1.5h-3.5V15h-7v5.5H5A1.5 1.5 0 0 1 3.5 19z'/%3E%3C/svg%3E"); }
 
 #btnRotate.tool[aria-pressed] { background: var(--glass); color: var(--chalk); border-color: var(--hair); }
 #btnRotate.tool[aria-pressed]:hover { background: var(--glass-strong); }
@@ -293,12 +296,13 @@ body.intro-on #topLeft, body.intro-on #btnMap, body.intro-on #btnPhotos, body.in
 #lbClose { flex: none; width: 46px; height: 46px; font-size: 32px; line-height: 1; border-radius: 50%; border: 1px solid var(--hair); background: var(--glass); transition: background .2s, color .2s, transform .3s; }
 #lbClose:hover { background: var(--chalk); color: var(--abyss); transform: rotate(90deg); }
 
-.bento { --gap: 12px; --row: 320px; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 6px 24px calc(28px + var(--safe-b)); -webkit-overflow-scrolling: touch; }
+.bento { --gap: 12px; --col: 320px; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 6px 24px calc(28px + var(--safe-b)); -webkit-overflow-scrolling: touch; }
 .bento[hidden] { display: none; }
-.brow { display: flex; gap: var(--gap); margin-bottom: var(--gap); }
+.bcols { display: flex; align-items: flex-start; gap: var(--gap); }
+.bcol { display: flex; flex-direction: column; gap: var(--gap); flex: none; }
 .tile { position: relative; flex: none; overflow: hidden; border-radius: 18px; background: var(--tide); box-shadow: 0 14px 34px rgba(0, 0, 0, .35); cursor: zoom-in;
   animation: tileIn .8s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 70ms + 120ms); }
-.tile img { display: block; width: 100%; height: 100%; transition: transform 1.1s cubic-bezier(.2, .8, .2, 1); }
+.tile img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 1.1s cubic-bezier(.2, .8, .2, 1); }
 .tile::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(243, 246, 244, .16); background: linear-gradient(180deg, rgba(13, 31, 45, 0) 55%, rgba(13, 31, 45, .5)); opacity: 0; transition: opacity .4s; pointer-events: none; }
 .tile:hover img, .tile:focus-visible img { transform: scale(1.05); }
 .tile:hover::after, .tile:focus-visible::after { opacity: 1; }
@@ -320,10 +324,10 @@ body.intro-on #topLeft, body.intro-on #btnMap, body.intro-on #btnPhotos, body.in
 #lbPrev, #lbNext { position: absolute; top: 50%; width: 52px; height: 52px; margin-top: -26px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--hair); background: var(--glass); transition: background .2s, color .2s; }
 #lbPrev { left: 16px; } #lbNext { right: 16px; }
 #lbPrev:hover, #lbNext:hover { background: var(--chalk); color: var(--abyss); }
-@media (max-width: 1024px) { .bento { --row: 250px; padding-left: 18px; padding-right: 18px; } }
+@media (max-width: 1024px) { .bento { --col: 260px; padding-left: 18px; padding-right: 18px; } }
 @media (max-width: 700px) {
   #lightbox > header { padding: calc(12px + var(--safe-t)) 12px 8px 18px; }
-  .bento { --gap: 8px; --row: 190px; padding: 4px 12px calc(20px + var(--safe-b)); }
+  .bento { --gap: 8px; --col: 150px; padding: 4px 12px calc(20px + var(--safe-b)); }
   .tile { border-radius: 14px; }
   #lbImg { max-width: calc(100% - 16px); max-height: calc(100% - 16px); }
   #lbStrip { gap: 6px; padding: 4px 12px calc(12px + var(--safe-b)); }
@@ -381,12 +385,15 @@ body.intro-on #pan { visibility: hidden; }
   #brandTag { display: none; }
   #topRight { gap: 6px; flex: none; }
   #tools { gap: 6px; }
-  .tool.icon, .tool.lang, #btnMenu { width: 40px; height: 40px; padding: 0; justify-content: center; }
-  #btnAreas { position: fixed; right: 14px; bottom: calc(22px + var(--safe-b)); z-index: 10; width: 54px; height: 54px; padding: 0; justify-content: center;
+  .tool.icon, .tool.lang, #btnMenu, #btnWebsite { width: 40px; height: 40px; padding: 0; justify-content: center; }
+  /* Photos and Areas sit together at the bottom right: Photos first, Areas last */
+  #btnAreas, #btnPhotos { position: fixed; right: 14px; bottom: calc(22px + var(--safe-b)); z-index: 10; width: 54px; height: 54px; padding: 0; justify-content: center;
     background: var(--glass); border: 1px solid var(--hair); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 10px 28px rgba(0, 0, 0, .3); }
-  #btnAreas i { width: 24px; height: 24px; }
+  #btnPhotos { right: calc(14px + 54px + 10px); }
+  #btnAreas i, #btnPhotos i { width: 24px; height: 24px; }
   .menu-mode { display: flex; }
   #scene { left: 14px; bottom: calc(22px + var(--safe-b)); max-width: calc(100vw - 96px); }
+  body:has(#btnPhotos:not([hidden])) #scene { max-width: calc(100vw - 160px); }
   #sceneName { font-size: 34px; }
   #stepper { margin-top: 12px; }
   #stepper button span { display: none; }
@@ -402,13 +409,13 @@ body.intro-on #pan { visibility: hidden; }
 @media (max-width: 380px) {
   #sceneName { font-size: 29px; }
   #topRight, #tools { gap: 3px; }
-  .tool.icon, .tool.lang, #btnMenu { width: 36px; height: 36px; }
+  .tool.icon, .tool.lang, #btnMenu, #btnWebsite { width: 36px; height: 36px; }
   #brand { max-width: calc(100vw - 214px); gap: 6px; padding: 4px 10px 4px 5px; }
   #brand img { width: 30px; height: 30px; }
   #brandName { font-size: 14.5px; }
 }
 @media (max-width: 340px) {
-  .tool.icon, .tool.lang, #btnMenu { width: 34px; height: 34px; }
+  .tool.icon, .tool.lang, #btnMenu, #btnWebsite { width: 34px; height: 34px; }
   #brand { max-width: calc(100vw - 200px); }
   #brand img { width: 26px; height: 26px; }
   #brandName { font-size: 13px; }

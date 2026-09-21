@@ -41,9 +41,12 @@
   }
 
   /* ---------- data ---------- */
-  var scenes = T.scenes.filter(function (s) { return !s.pending; });
+  var all = T.scenes.filter(function (s) { return !s.pending; });
+  // A homeOnly scene is just the picture behind the welcome screen: it stays out of the Areas list and Previous / Next.
+  var scenes = all.filter(function (s) { return !s.homeOnly; });
   var byId = {};
-  scenes.forEach(function (s, i) { s.index = i; byId[s.id] = s; });
+  scenes.forEach(function (s, i) { s.index = i; });
+  all.forEach(function (s) { byId[s.id] = s; });
   var chapterById = {};
   T.chapters.forEach(function (c) {
     c.scenes = scenes.filter(function (s) { return s.chapter === c.id; });
@@ -54,7 +57,7 @@
     slugToId[slugify(s.name)] = s.id;
     if (s.nameIt) slugToId[slugify(s.nameIt)] = s.id;
   });
-  scenes.forEach(function (s) {
+  all.forEach(function (s) {
     s.links = (s.links || []).filter(function (l) { return byId[l.to]; });
   });
 
@@ -580,8 +583,7 @@
     t._h = setTimeout(function () { t.hidden = true; }, 4500);
   }
 
-  // The gallery opens as a justified grid: every photo keeps its own proportions (nothing is cropped),
-  // rows are scaled so they fill the width exactly. Clicking a photo opens it large, Close goes back to the grid.
+  // The gallery opens as a grid of equal-width photos. Clicking a photo opens it large, Close goes back to the grid.
   function measure(src) {
     return new Promise(function (res) {
       var im = new Image();
@@ -592,7 +594,8 @@
     });
   }
 
-  var ROW_MIX = [1.28, 0.92, 1.05, 1.18, 0.9];
+  // Every photo gets the same width. The number of columns adapts to the screen, so the width adapts too,
+  // and each photo keeps its own height (extreme shapes are trimmed a little so no tile gets too tall or too flat).
   function layoutGrid() {
     var grid = $('#galGrid');
     if (!lb.items || grid.hidden) return;
@@ -600,40 +603,38 @@
     var W = grid.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     if (W <= 0) return;
     var gap = parseFloat(cs.getPropertyValue('--gap')) || 12;
-    var base = parseFloat(cs.getPropertyValue('--row')) || 320;
+    var minCol = parseFloat(cs.getPropertyValue('--col')) || 320;
+    var cols = Math.max(1, Math.min(lb.items.length, Math.floor((W + gap) / (minCol + gap))));
+    var colW = (W - (cols - 1) * gap) / cols;
     grid.textContent = '';
-    var i = 0, row = 0, n = lb.items.length, idx = 0;
-    while (i < n) {
-      var H = base * ROW_MIX[row % ROW_MIX.length], sum = 0, j = i;
-      while (j < n) {
-        sum += lb.items[j].ar;
-        j++;
-        if (sum * H + (j - i - 1) * gap >= W) break;
-      }
-      var count = j - i;
-      var fit = (W - (count - 1) * gap) / sum;
-      var last = j >= n;
-      var h = last && fit > H * 1.12 ? H : fit;
-      var rowEl = document.createElement('div');
-      rowEl.className = 'brow';
-      for (var k = i; k < j; k++) {
-        var it = lb.items[k];
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'tile';
-        b.style.setProperty('--i', idx++);
-        b.style.width = (it.ar * h).toFixed(2) + 'px';
-        b.style.height = h.toFixed(2) + 'px';
-        b.setAttribute('aria-label', t('photoN', { n: k + 1 }));
-        var im = new Image();
-        im.alt = ''; im.decoding = 'async'; im.src = it.src;
-        b.appendChild(im);
-        (function (index) { b.addEventListener('click', function () { showPhoto(index); }); })(k);
-        rowEl.appendChild(b);
-      }
-      grid.appendChild(rowEl);
-      i = j; row++;
+    var wrap = document.createElement('div');
+    wrap.className = 'bcols';
+    var colEls = [], heights = [];
+    for (var c = 0; c < cols; c++) {
+      var ce = document.createElement('div');
+      ce.className = 'bcol';
+      ce.style.width = colW.toFixed(2) + 'px';
+      wrap.appendChild(ce);
+      colEls.push(ce); heights.push(0);
     }
+    lb.items.forEach(function (it, k) {
+      var shortest = heights.indexOf(Math.min.apply(null, heights));
+      var h = colW / Math.min(2.2, Math.max(0.8, it.ar));
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tile';
+      b.style.setProperty('--i', k);
+      b.style.width = colW.toFixed(2) + 'px';
+      b.style.height = h.toFixed(2) + 'px';
+      b.setAttribute('aria-label', t('photoN', { n: k + 1 }));
+      var im = new Image();
+      im.alt = ''; im.decoding = 'async'; im.src = it.src;
+      b.appendChild(im);
+      b.addEventListener('click', function () { showPhoto(k); });
+      colEls[shortest].appendChild(b);
+      heights[shortest] += h + gap;
+    });
+    grid.appendChild(wrap);
   }
   var layoutTimer = 0;
   window.addEventListener('resize', function () { clearTimeout(layoutTimer); layoutTimer = setTimeout(layoutGrid, 120); });
@@ -791,6 +792,7 @@
     });
     $('#inqCall').href = telHref(C.phone);
     $('#inqMail').href = 'mailto:' + C.email;
+    $('#btnWebsite').href = C.website;
   }
 
   function share() {
@@ -821,7 +823,7 @@
     var acts = {
       start: function () { closePanels(); hideIntro(); goTo(T.home.startScene); },
       areas: function () { setPanel('areas', true); },
-      aerial: function () { closePanels(); hideIntro(); goTo(T.home.scene); },
+      aerial: function () { closePanels(); hideIntro(); goTo(T.home.aerial || T.home.scene); },
       galleries: function (b) { var open = gList.hidden; gList.hidden = !open; b.setAttribute('aria-expanded', String(open)); },
       plan: function () { setPanel('plan', true); },
       share: share,
