@@ -221,7 +221,7 @@ a.tool { text-decoration: none; }
 #scene.reveal #sceneChapter, #scene.reveal #sceneName, #scene.reveal #stepper { animation: titleIn 1s cubic-bezier(.2, .7, .2, 1) both; }
 #scene.reveal #sceneName { animation-delay: .12s; }
 #scene.reveal #stepper { animation-delay: .24s; }
-@keyframes titleIn { from { opacity: 0; transform: translateY(14px); filter: blur(6px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes titleIn { from { opacity: 0; transform: translateY(14px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
 
 /* ---------- panels ---------- */
 .panel { position: fixed; top: 0; bottom: 0; left: 0; z-index: 30; width: min(400px, 100vw); display: flex; flex-direction: column; padding-top: var(--safe-t);

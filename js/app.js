@@ -64,13 +64,14 @@
   /* ---------- viewer ---------- */
   var viewer = new Marzipano.Viewer($('#pano'), { stage: { progressive: true } });
   var geometry = new Marzipano.CubeGeometry(LEVELS);
-  // Marzipano's fov is the VERTICAL angle, so the limits and the default are set by horizontal angle.
-  var limiter = Marzipano.RectilinearView.limit.traditional(FACE_SIZE, rad(130), rad(130));
+  // Marzipano's fov is the VERTICAL angle. The widest view allowed is 130 degrees, both across and up-down.
+  var MAX_FOV = rad(130);
+  var limiter = Marzipano.RectilinearView.limit.traditional(FACE_SIZE, MAX_FOV, MAX_FOV);
 
-  // Landscape: same 83 degree vertical angle as the reference tour. Portrait: 88 degrees across.
+  // Every place opens fully zoomed out (the widest view the limiter allows); the + button zooms in from there.
   function defaultFov() {
-    if (window.innerWidth >= window.innerHeight) return rad(83);
-    return 2 * Math.atan(Math.tan(rad(88) / 2) * window.innerHeight / window.innerWidth);
+    var acrossLimit = 2 * Math.atan(Math.tan(MAX_FOV / 2) * window.innerHeight / window.innerWidth);
+    return Math.min(MAX_FOV, acrossLimit);
   }
 
   var cache = {};
@@ -145,15 +146,17 @@
 
   function linkElement(l) {
     var dest = byId[l.to];
-    var el = hotspotBase('hs-link', { label: nm(dest), sub: nm(chapterById[dest.chapter]), thumb: 'thumbs/' + dest.id + '.jpg', prefetch: dest.id });
+    // A link can carry its own name (label / labelIt); otherwise it shows the name of the place it leads to.
+    function linkName() { return (lang === 'it' && l.labelIt) || l.label || nm(dest); }
+    var el = hotspotBase('hs-link', { label: linkName(), sub: nm(chapterById[dest.chapter]), thumb: 'thumbs/' + dest.id + '.jpg', prefetch: dest.id });
     el.addEventListener('click', function () {
       var r = el.querySelector('.hs-pin').getBoundingClientRect();
       goTo(l.to, { link: l, origin: { x: r.left + r.width / 2, y: r.top + r.height / 2 } });
     });
     labelers.push(function () {
-      el.querySelector('b').textContent = nm(dest);
+      el.querySelector('b').textContent = linkName();
       el.querySelector('small').textContent = nm(chapterById[dest.chapter]);
-      el.setAttribute('aria-label', nm(dest));
+      el.setAttribute('aria-label', linkName());
     });
     return el;
   }

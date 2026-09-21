@@ -78,7 +78,7 @@ Almost everything is in **`js/scenes.js`**. After any change, do a hard refresh 
 { id: "18quercia2", chapter: "garden", name: "Oak Tree 2", nameIt: "Quercia 2",
   view: { yaw: -171, pitch: -12 },
   links: [{ to: "19sala1", yaw: -174, pitch: 13 }, { to: "16giardino2", yaw: 94, pitch: 19 }],
-  gallery: { folder: "gallery/18quercia2", count: 10 } }
+  gallery: { folder: "gallery/11torre3", count: 10 } }
 ```
 
 | Field | Meaning |
