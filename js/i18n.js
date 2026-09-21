@@ -7,7 +7,7 @@ window.I18N = {
   en: {
     tagline: "Virtual tour",
     welcomeScreen: "Welcome screen",
-    back: "Back", areas: "Areas", plan: "Plan", photos: "Photos",
+    back: "Back", areas: "Areas", plan: "Plan", photos: "Photos", gallery: "Gallery",
     pauseRotate: "Pause auto-rotate", playRotate: "Play auto-rotate",
     fullscreen: "Fullscreen", language: "Language", inquire: "Inquire", website: "Website", goWebsite: "Go to website", inquireTip: "Call or email us", menu: "Menu",
     lookLR: "Look left or right", lookLeft: "Look left", lookRight: "Look right",
@@ -31,7 +31,7 @@ window.I18N = {
   it: {
     tagline: "Tour virtuale",
     welcomeScreen: "Schermata iniziale",
-    back: "Indietro", areas: "Aree", plan: "Planimetria", photos: "Foto",
+    back: "Indietro", areas: "Aree", plan: "Planimetria", photos: "Foto", gallery: "Galleria",
     pauseRotate: "Metti in pausa la rotazione", playRotate: "Avvia la rotazione",
     fullscreen: "Schermo intero", language: "Lingua", inquire: "Contattaci", website: "Sito web", goWebsite: "Vai al sito web", inquireTip: "Chiamaci o scrivici", menu: "Menu",
     lookLR: "Guarda a sinistra o a destra", lookLeft: "Guarda a sinistra", lookRight: "Guarda a destra",
