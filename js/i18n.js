@@ -20,13 +20,13 @@ window.I18N = {
     miStart: "Start the tour",
     miAreas: "All places",
     miAerial: "Aerial view",
-    miGalleries: "Photos",
+    miGalleries: "Gallery",
     miPlan: "Floor plan",
     miShare: "Share",
     miWelcome: "Home",
     linkCopied: "Link copied",
     noPhotos: "No photos in {folder}/ yet. Add 01.jpg, 02.jpg ...",
-    photoCount: "{n} photos", photoN: "Photo {n}", closePhotos: "Close photos", prevPhoto: "Previous photo", nextPhoto: "Next photo"
+    photoCount: "Gallery", photoN: "Photo {n}", closePhotos: "Close photos", prevPhoto: "Previous photo", nextPhoto: "Next photo"
   },
   it: {
     tagline: "Tour virtuale",
@@ -44,12 +44,12 @@ window.I18N = {
     miStart: "Inizia il tour",
     miAreas: "Tutti i luoghi",
     miAerial: "Vista aerea",
-    miGalleries: "Foto",
+    miGalleries: "Galleria",
     miPlan: "Planimetria",
     miShare: "Condividi",
     miWelcome: "Home",
     linkCopied: "Link copiato",
     noPhotos: "Ancora nessuna foto in {folder}/. Aggiungi 01.jpg, 02.jpg ...",
-    photoCount: "{n} foto", photoN: "Foto {n}", closePhotos: "Chiudi le foto", prevPhoto: "Foto precedente", nextPhoto: "Foto successiva"
+    photoCount: "Galleria", photoN: "Foto {n}", closePhotos: "Chiudi le foto", prevPhoto: "Foto precedente", nextPhoto: "Foto successiva"
   }
 };

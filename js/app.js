@@ -422,9 +422,8 @@
       var sec = document.createElement('section');
       sec.className = 'chapter';
       var h = document.createElement('h3');
-      h.innerHTML = '<b></b><span></span>';
+      h.innerHTML = '<b></b>';
       h.firstChild.textContent = nm(ch);
-      h.lastChild.textContent = ch.scenes.length;
       sec.appendChild(h);
       var ol = document.createElement('ol');
       ol.className = 'route';
@@ -792,11 +791,14 @@
   function telHref(p) { return 'tel:' + p.replace(/[^\d+]/g, ''); }
 
   function fillContact() {
-    ['inqPhone', 'menuPhone'].forEach(function (id) {
-      var a = $('#' + id);
-      a.textContent = C.phone;
-      a.href = telHref(C.phone);
-    });
+    var email = $('#menuEmail');
+    email.querySelector('.menu-email').textContent = C.email;
+    email.href = 'mailto:' + C.email;
+    var menuPhone = $('#menuPhone');
+    menuPhone.querySelector('.menu-phone').textContent = C.phone;
+    menuPhone.href = telHref(C.phone);
+    $('#inqPhone').textContent = C.phone;
+    $('#inqPhone').href = telHref(C.phone);
     $('#inqCall').href = telHref(C.phone);
     $('#inqMail').href = 'mailto:' + C.email;
     $('#btnWebsite').href = C.website;
@@ -845,8 +847,6 @@
   }
 
   function refreshMenu() {
-    $('#miAreasCount').textContent = scenes.length;
-    $('#miGalCount').textContent = scenes.filter(function (s) { return s.gallery; }).length;
     Array.prototype.forEach.call(document.querySelectorAll('#miGalList [data-gal]'), function (b) {
       var sc = byId[b.dataset.gal];
       b.querySelector('span').textContent = nm(sc);
