@@ -1,6 +1,7 @@
 """
-Convert equirectangular 360 JPGs (images/) into Marzipano cube-map tiles (assets/tiles/)
-and small thumbnails (assets/thumbs/).
+Convert equirectangular 360 JPGs (images/) into Marzipano cube-map tiles (assets/tiles/<area>/<id>/)
+and small thumbnails (assets/thumbs/<area>/<id>.jpg). <area> is read from each scene's chapter in
+js/scenes.js, so a new panorama must have its scene entry (with the right chapter) added there first.
 
 Usage:
     python tools/build_tiles.py              # process only new images
@@ -22,7 +23,36 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "images")
 OUT_TILES = os.path.join(ROOT, "assets", "tiles")
 OUT_THUMBS = os.path.join(ROOT, "assets", "thumbs")
+SCENES_JS = os.path.join(ROOT, "js", "scenes.js")
 OUT_PREVIEW = os.environ.get("PREVIEW_DIR")  # optional: low-res equirect previews
+
+
+def slugify(s):
+    """Same rule as the site's own slugify() in app.js, so folder names always match."""
+    import unicodedata
+    s = unicodedata.normalize("NFD", s.lower())
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    s = s.replace("'", "").replace("’", "")
+    s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+    return s
+
+
+def load_scene_folders():
+    """Tiles / thumbnails are grouped on disk by area, in a folder named after the chapter's
+    Italian name (js/scenes.js is the only place that says which scene belongs to which chapter,
+    so it is read from there instead of being duplicated here)."""
+    src = open(SCENES_JS, encoding="utf-8").read()
+    chapter_folder = {}
+    for cid, name_it in re.findall(r'\{ id: "([a-z]+)", name: "[^"]*", nameIt: "([^"]*)" \}', src):
+        chapter_folder[cid] = slugify(name_it)
+    scene_folder = {}
+    for sid, cid in re.findall(r'\{ id: "([a-zA-Z0-9]+)"(?:, homeOnly: true)?, chapter: "([a-z]+)"', src):
+        if cid in chapter_folder:
+            scene_folder[sid] = chapter_folder[cid]
+    return scene_folder
+
+
+SCENE_FOLDER = load_scene_folders()
 
 # (face size in px, tile size in px). Index in this list == {z} in the tile URL.
 LEVELS = [(512, 512), (1536, 1536), (3072, 1536)]
@@ -111,7 +141,11 @@ def face_map(face, size, w, h):
 
 def build(filename):
     sid = scene_id(filename)
-    out = os.path.join(OUT_TILES, sid)
+    folder = SCENE_FOLDER.get(sid)
+    if not folder:
+        return sid, "unknown chapter - add this scene to js/scenes.js first, then re-run"
+    out = os.path.join(OUT_TILES, folder, sid)
+    thumb_dir = os.path.join(OUT_THUMBS, folder)
     cv2.setNumThreads(2)
     img = cv2.imread(os.path.join(SRC, filename), cv2.IMREAD_COLOR)
     if img is None:
@@ -137,8 +171,8 @@ def build(filename):
             side = cv2.resize(big, (1024, 1024), interpolation=cv2.INTER_AREA)
             crop = side[224:224 + 576, :]
             crop = cv2.resize(crop, (480, 270), interpolation=cv2.INTER_AREA)
-            os.makedirs(OUT_THUMBS, exist_ok=True)
-            cv2.imwrite(os.path.join(OUT_THUMBS, sid + ".jpg"), crop, [cv2.IMWRITE_JPEG_QUALITY, 78])
+            os.makedirs(thumb_dir, exist_ok=True)
+            cv2.imwrite(os.path.join(thumb_dir, sid + ".jpg"), crop, [cv2.IMWRITE_JPEG_QUALITY, 78])
         for z, (size, tile) in enumerate(LEVELS):
             level = big if size == top else cv2.resize(big, (size, size), interpolation=cv2.INTER_AREA)
             n = size // tile
@@ -158,7 +192,11 @@ if __name__ == "__main__":
     if args:
         files = [f for f in files if os.path.splitext(f)[0] in args]
         force = True
-    todo = [f for f in files if force or not os.path.isdir(os.path.join(OUT_TILES, scene_id(f)))]
+    def already_built(f):
+        sid = scene_id(f)
+        folder = SCENE_FOLDER.get(sid)
+        return folder and os.path.isdir(os.path.join(OUT_TILES, folder, sid))
+    todo = [f for f in files if force or not already_built(f)]
     print(f"{len(todo)} of {len(files)} images to process", flush=True)
     with Pool(3) as pool:
         for sid, status in pool.imap_unordered(build, todo):

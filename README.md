@@ -30,13 +30,13 @@ then open http://localhost:8000 (or `http://localhost:8000/#hall-2` to open a pl
 | `js/i18n.js` | Interface texts in English and Italian | sometimes |
 | `js/app.js` | The viewer logic (navigation, transition, menu, gallery, language, URLs) | rarely |
 | `css/style.css` | All styling. Colours and fonts are variables at the top | sometimes |
-| `assets/tiles/` | The panoramas, cut into small tiles (one folder per place) | generated |
-| `assets/thumbs/` | Small preview picture per place (menu list and hotspot cards) | generated |
-| `assets/gallery/<place-id>/` | Extra photos per place (`01.jpg`, `02.jpg` ...) | **yes** |
+| `assets/tiles/<area>/` | The panoramas, cut into small tiles (one folder per place, grouped by area - see below) | generated |
+| `assets/thumbs/<area>/` | Small preview picture per place (menu list and hotspot cards), grouped by area | generated |
+| `assets/gallery/<area>/<place-id>/` | Extra photos per place (`01.jpg`, `02.jpg` ...) | **yes** |
 | `assets/` | Logo, emblem, browser-tab icon | when the logo changes |
 | `assets/fonts/` | Bodoni Moda, Instrument Sans, IBM Plex Mono (self-hosted) | no |
 | `vendor/marzipano.js` | The viewer library, unmodified | no |
-| `tools/build_tiles.py` | Turns the original panoramas into `assets/tiles/` and `assets/thumbs/` (runs on your computer only) | no |
+| `tools/build_tiles.py` | Turns the original panoramas into `assets/tiles/<area>/` and `assets/thumbs/<area>/` (runs on your computer only) | no |
 
 The original 12000 px panoramas (`images/`, about 2 GB) are **not** part of the website and are kept outside the repository.
 
@@ -72,19 +72,22 @@ Arrow keys look around, `+` / `-` zoom, `PageUp` / `PageDown` previous / next pl
 
 Almost everything is in **`js/scenes.js`**. After any change, do a hard refresh (Ctrl+F5) - see section 7.
 
+For a full, step-by-step walkthrough of adding a brand-new place or a photo gallery - including
+where the `images/` folder goes and exactly what to write and where - see **`INSTRUCTIONS.md`**.
+
 ### A place (scene)
 
 ```js
 { id: "18quercia2", chapter: "garden", name: "Oak Tree 2", nameIt: "Quercia 2",
   view: { yaw: -171, pitch: -12 },
   links: [{ to: "19sala1", yaw: -174, pitch: 13 }, { to: "16giardino2", yaw: 94, pitch: 19 }],
-  gallery: { folder: "assets/gallery/11torre3", count: 10 } }
+  gallery: { folder: "assets/gallery/la-torre/11torre3", count: 10 } }
 ```
 
 | Field | Meaning |
 |---|---|
-| `id` | Must equal the tile folder name in `assets/tiles/`. It is the panorama file name in lowercase, without spaces, underscores or extension (`17_Quercia1.jpg` -> `17quercia1`). |
-| `chapter` | Key from `chapters` (groups the place in the Areas list). |
+| `id` | Must equal the tile folder name inside its area in `assets/tiles/<area>/`. It is the panorama file name in lowercase, without spaces, underscores or extension (`17_Quercia1.jpg` -> `17quercia1`). |
+| `chapter` | Key from `chapters` (groups the place in the Areas list). This also decides `<area>`: it is the chapter's `nameIt` turned into a folder name (spaces to dashes, lowercase) - e.g. chapter `tower` ("La Torre") stores its tiles under `assets/tiles/la-torre/`. `tools/build_tiles.py` works this out on its own by reading `chapters` here, so a new place only needs the right `chapter`, nothing to set by hand. |
 | `name` / `nameIt` | English / Italian title. If `nameIt` is missing the English name is shown. Both also become the share link. |
 | `view` | Direction the visitor faces on arrival, in degrees. `yaw` 0 = centre of the picture, positive = right. `pitch` 0 = horizon, **positive = down**, negative = up. |
 | `links` | The arrows: `to` (destination id), `yaw`, `pitch` (where the arrow stands). |
@@ -112,9 +115,9 @@ clipboard and shown on screen. Paste it into the place's `links` and fill in `to
 
 ### Photo galleries
 
-Each gallery reads `assets/gallery/<place-id>/01.jpg ... 10.jpg`. Missing numbers are skipped, so 4 photos work fine.
+Each gallery reads `assets/gallery/<area>/<place-id>/01.jpg ... 10.jpg`. Missing numbers are skipped, so 4 photos work fine.
 Landscape and portrait both work and nothing is cropped. To give another place a gallery, add
-`gallery: { folder: "assets/gallery/<place-id>", count: 10 }` to it and put the photos in that folder.
+`gallery: { folder: "assets/gallery/<area>/<place-id>", count: 10 }` to it and put the photos in that folder.
 **The photos in the repository right now are stand-ins** rendered from the panoramas - replace them with the real photos using
 the same file names (JPG, about 1600 px on the long side).
 
@@ -127,8 +130,9 @@ the same file names (JPG, about 1600 px on the long side).
 
 ### Welcome screen
 
-`home` in `js/scenes.js`: `scene` (background panorama, currently the aerial drone shot), `view` (its opening direction),
-`startScene` (where *Start the tour* goes).
+`home` in `js/scenes.js`: `scene` (background panorama - a dedicated `homeOnly: true` scene that
+does not appear in Areas or Previous / Next), `aerial` (which place the Menu's *Aerial view* item
+opens), `view` (the background's opening direction), `startScene` (where *Start the tour* goes).
 
 ### Contact details
 
@@ -186,7 +190,7 @@ index.html   css/   js/   vendor/   assets/  (fonts, tiles, thumbs, gallery and 
 - **A change does not show up**: the browser cached the old files. Hard refresh (Ctrl+F5). When you deploy an update, also bump the
   `?v=` number on the three script tags and the stylesheet link in `index.html` (currently `?v=32`) so visitors get the new files.
 - **Blank screen / no tiles when opening `index.html`**: use a local server (section 1).
-- **A place does not appear in the menu**: its `id` does not match a folder in `assets/tiles/`, or it is marked `pending: true`.
+- **A place does not appear in the menu**: its `id` does not match a folder in `assets/tiles/<area>/`, or it is marked `pending: true`.
 - **An arrow leads nowhere**: the `to` id does not exist or the target is `pending`; hidden targets are skipped silently.
 - **Arrows jump or hotspots look shifted after re-tiling**: `LEVELS` / `FACE_SIZE` in `js/app.js` must match `tools/build_tiles.py`.
 - **The transition feels too fast / slow or the trail too strong**: `PUSH`, `MAXS` and `MAXT` in the `goTo` function of `js/app.js`.

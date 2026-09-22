@@ -246,7 +246,6 @@ a.tool { text-decoration: none; }
 .stop::before { content: ""; position: absolute; left: -18px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: var(--abyss); border: 1px solid var(--salt); }
 .stop img { width: 76px; height: 46px; object-fit: cover; border-radius: 6px; background: var(--tide); }
 .stop b { flex: 1; font-size: 14px; font-weight: 500; }
-.stop small { font-family: var(--mono); font-size: 11px; color: var(--salt); }
 .stop:hover { background: rgba(243, 246, 244, .07); }
 .stop.current::before { background: var(--lagoon); border-color: var(--lagoon); box-shadow: 0 0 0 4px rgba(127, 227, 214, .22); }
 .stop.current b { color: var(--lagoon); }

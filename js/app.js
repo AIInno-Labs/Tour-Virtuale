@@ -51,8 +51,13 @@
   T.chapters.forEach(function (c) {
     c.scenes = scenes.filter(function (s) { return s.chapter === c.id; });
     c.scenes.forEach(function (s, i) { s.chIndex = i; });
+    // Assets (tiles / thumbnails / gallery photos) are grouped on disk by area, in an Italian-named folder
+    // derived from the chapter's own name, so there is nothing extra to keep in sync.
+    c.folder = slugify(c.nameIt);
     chapterById[c.id] = c;
   });
+  function tileBase(id) { return TILES_DIR + chapterById[byId[id].chapter].folder + '/' + id; }
+  function thumbSrc(scene) { return 'assets/thumbs/' + chapterById[scene.chapter].folder + '/' + scene.id + '.jpg'; }
   scenes.forEach(function (s) {
     slugToId[slugify(s.name)] = s.id;
     if (s.nameIt) slugToId[slugify(s.nameIt)] = s.id;
@@ -81,7 +86,7 @@
     var d = byId[id];
     if (!d) return null;
     if (cache[id]) return cache[id];
-    var source = Marzipano.ImageUrlSource.fromString(TILES_DIR + id + '/{z}/{f}/{y}/{x}.jpg');
+    var source = Marzipano.ImageUrlSource.fromString(tileBase(id) + '/{z}/{f}/{y}/{x}.jpg');
     var view = new Marzipano.RectilinearView({ yaw: 0, pitch: 0, fov: defaultFov() }, limiter);
     var scene = viewer.createScene({ source: source, geometry: geometry, view: view, pinFirstLevel: true });
     d.links.forEach(function (l) { addHotspot(scene, l.yaw, l.pitch, linkElement(l)); });
@@ -148,7 +153,7 @@
     var dest = byId[l.to];
     // A link can carry its own name (label / labelIt); otherwise it shows the name of the place it leads to.
     function linkName() { return (lang === 'it' && l.labelIt) || l.label || nm(dest); }
-    var el = hotspotBase('hs-link', { label: linkName(), sub: nm(chapterById[dest.chapter]), thumb: 'assets/thumbs/' + dest.id + '.jpg', prefetch: dest.id });
+    var el = hotspotBase('hs-link', { label: linkName(), sub: nm(chapterById[dest.chapter]), thumb: thumbSrc(dest), prefetch: dest.id });
     el.addEventListener('click', function () {
       var r = el.querySelector('.hs-pin').getBoundingClientRect();
       goTo(l.to, { link: l, origin: { x: r.left + r.width / 2, y: r.top + r.height / 2 } });
@@ -211,7 +216,7 @@
       return new Promise(function (res) {
         var im = new Image();
         im.onload = im.onerror = function () { n++; if (tick) tick(n / 6); res(); };
-        im.src = TILES_DIR + id + '/0/' + f + '/0/0.jpg';
+        im.src = tileBase(id) + '/0/' + f + '/0/0.jpg';
       });
     })));
   }
@@ -429,10 +434,9 @@
         b.type = 'button';
         b.className = 'stop';
         b.dataset.id = s.id;
-        b.innerHTML = '<img loading="lazy" alt="" width="76" height="46"><b></b><small></small>';
-        b.querySelector('img').src = 'assets/thumbs/' + s.id + '.jpg';
+        b.innerHTML = '<img loading="lazy" alt="" width="76" height="46"><b></b>';
+        b.querySelector('img').src = thumbSrc(s);
         b.querySelector('b').textContent = nm(s);
-        b.querySelector('small').textContent = ('0' + (s.index + 1)).slice(-2);
         b.addEventListener('click', function () {
           hideIntro();
           goTo(s.id);
@@ -818,7 +822,7 @@
       b.type = 'button';
       b.dataset.gal = s.id;
       b.innerHTML = '<img alt="" width="64" height="38"><span></span><small></small>';
-      b.querySelector('img').src = 'assets/thumbs/' + s.id + '.jpg';
+      b.querySelector('img').src = thumbSrc(s);
       gList.appendChild(b);
     });
     if (T.map && T.map.image) $('[data-act="plan"]').hidden = false;
