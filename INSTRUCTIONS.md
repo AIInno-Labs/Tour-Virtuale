@@ -1,9 +1,11 @@
 # Adding a new place or a photo gallery - step-by-step
 
-This file is a detailed walkthrough for two specific jobs: **adding a brand-new panorama (place)**
-to the tour, and **adding or replacing a photo gallery**. For everything else (colours, texts,
-deployment, troubleshooting in general) see `README.md`. Read `README.md` section 2 and 4 first if
-you haven't - this file assumes you know what `js/scenes.js` and `tools/build_tiles.py` are.
+This file is a detailed walkthrough for three specific jobs: **adding a brand-new panorama (place)**
+to the tour, **adding or replacing a photo gallery**, and **giving a place a night version** (or
+adding a place that only exists at night). For everything else (colours, texts, deployment,
+troubleshooting in general) see `README.md`. Read `README.md` section 2 and 4 first if you haven't -
+this file assumes you know what `js/scenes.js` and `tools/build_tiles.py` are, and that you've read
+README's "Night view" section before starting on part 3 below.
 
 Every command below is run from the project's root folder (the one that contains `index.html`).
 
@@ -290,21 +292,111 @@ it's no longer read once the field is gone).
 
 ---
 
-## 3. Quick reference
+## 3. Adding a night version of a place
+
+Two cases: giving an existing day place a night photo too, and adding a place that only exists at
+night (no day equivalent). Both use the `night` field described in README's "Night view" section -
+read that first for what each part of `night` means. You need `images-night/` (create it next to
+`images/` - same "never uploaded" rule) and the same `pip install opencv-python numpy` from part 0.
+
+### 3a. Giving an existing day place a night photo
+
+Say `07pineta1` ("Pine Grove 1") gets a night photo.
+
+**Step 1 - Prepare the photo.** Equirectangular, 2:1, same as day photos. Name it directly after the
+scene's `id`, with no camera-name step: `images-night/07pineta1.jpg`. Before naming it, confirm by
+eye that it really is the same physical spot as the day photo, not just a similar-looking one - see
+README's "Matching a night photo to a place".
+
+**Step 2 - Build its tiles.**
+```
+python tools/build_tiles.py --night
+```
+Same rules as the day build: only new files are processed, `--night --force` rebuilds everything,
+`python tools/build_tiles.py --night 07pineta1` rebuilds just this one. This produces
+`assets/tiles-night/pineta/07pineta1/` and `assets/thumbs-night/pineta/07pineta1.jpg`.
+
+**Step 3 - Add the `night` field**, positions empty for now:
+```js
+{ id: "07pineta1", chapter: "pine", night: { positions: {} }, name: "Pine Grove 1", nameIt: "Pineta 1",
+  view: { yaw: -62, pitch: 7 },
+  links: [ ... ] },
+```
+This alone makes the place show up in night mode's Areas list and Previous / Next order, just with no
+hotspots yet.
+
+**Step 4 - Set its night hotspots and opening view.** Switch the site into night mode, then open
+`index.html?edit=1#07pineta1`. Click the panorama the same way as for a day link: a line like
+`{ to: "", yaw: 12, pitch: 5 }` is copied - paste it into `night.positions` instead of `links`, keyed
+by the destination id (`"08pineta2": { yaw: 12, pitch: 5 }`). Repeat for every neighbour reachable at
+night - it does not have to be the same neighbours as by day. Also add the matching hotspot the other
+way, on each neighbour's own `night.positions`. Then pick one of those positions as the opening
+`view` (never leave a night place facing the ground or a blank wall):
+```js
+{ id: "07pineta1", chapter: "pine",
+  night: { positions: { "08pineta2": { yaw: 12, pitch: 5 } }, view: { yaw: 12, pitch: 5 } },
+  name: "Pine Grove 1", nameIt: "Pineta 1",
+  view: { yaw: -62, pitch: 7 },
+  links: [ ... ] },
+```
+
+**Step 5 - Rename it for night, only if needed.** If the place should be called something different
+at night (common when a night-only photo gets inserted before it and everything after it shifts by
+one - see `10torre2`, night name "Tower 3", for a real example), add `name` / `nameIt` inside the
+`night` object too. Otherwise the day name is reused automatically - do not repeat it for no reason.
+
+### 3b. Adding a place that only exists at night
+
+Use this when a night photo has no day equivalent at all (e.g. a lounge area only visible with the
+string lights on). It is a normal scene entry, marked `nightOnly: true`, with only night data - no
+day `view` of its own:
+
+```js
+{ id: "torre2b", chapter: "tower", nightOnly: true,
+  night: { positions: { "10torre2": { yaw: 69.9, pitch: 9.8 }, "09torre1": { yaw: 165.9, pitch: 10.1 } },
+           view: { yaw: 69.9, pitch: 9.8 } },
+  name: "Tower 2", nameIt: "Torre 2",
+  links: [{ to: "10torre2", yaw: 69.9, pitch: 9.8 }, { to: "09torre1", yaw: 165.9, pitch: 10.1 }] },
+```
+
+The steps are the same as 3a (photo in `images-night/<id>.jpg`, `python tools/build_tiles.py --night`,
+find positions with `?edit=1` in night mode), with two differences:
+
+- Set `nightOnly: true` right after `chapter`.
+- **Also copy `night.positions` into a top-level `links` array**, same `to` / `yaw` / `pitch` values.
+  This is easy to forget, and the result is a place with a correct Areas listing and Previous / Next
+  but zero hotspots showing in night mode: `getScene()` reads `night.positions` for hotspots when
+  night mode is on, but other code (prefetching neighbouring tiles, for one) still reads `links`, so
+  both need the same data.
+- Where the entry sits in the `scenes` array no longer decides day order (it's filtered out of the
+  day list by `nightOnly`) - it now only decides where it falls in the **night** Previous / Next
+  order, relative to the other night-capable scenes around it.
+
+### Checking it
+
+Switch to night mode and refresh. The place should appear in the night Areas list under the right
+chapter, with the right name, a working opening view, and a hotspot to and from each neighbour you
+connected it to. As with day places, remember to bump `?v=` in `index.html` before deploying.
+
+---
+
+## 4. Quick reference
 
 | Where | What you do there |
 |---|---|
-| `images/` (create it yourself, project root) | Drop original full-size panoramas here. Never uploaded/deployed. Safe to delete a photo once its tiles are built. |
-| `js/scenes.js` | Add the chapter (if new), add the scene entry, set `view` / `links`, add the `gallery` field. This is the only file you *must* edit for new content. |
-| `assets/tiles/<area>/<id>/`, `assets/thumbs/<area>/<id>.jpg` | Generated by `tools/build_tiles.py`. Never edit these by hand or move them - re-run the script instead. |
-| `assets/gallery/<area>/<place-id>/` | You manage these photos by hand: create the folder, drop in `01.jpg`, `02.jpg`, ... |
-| `tools/build_tiles.py` | Run it, don't edit it (unless you're changing the tiling itself - see README section 4, "Add or replace a panorama"). |
+| `images/` (create it yourself, project root) | Drop original full-size day panoramas here. Never uploaded/deployed. Safe to delete a photo once its tiles are built. |
+| `images-night/` (create it yourself, project root) | Same, for night panoramas - named directly after the scene id (no camera-name step). |
+| `js/scenes.js` | Add the chapter (if new), add the scene entry, set `view` / `links`, add the `gallery` field, add the `night` field for a night version. This is the only file you *must* edit for new content. |
+| `assets/tiles/<area>/<id>/`, `assets/thumbs/<area>/<id>.jpg` | Day tiles/thumb, generated by `tools/build_tiles.py`. Never edit these by hand or move them - re-run the script instead. |
+| `assets/tiles-night/<area>/<id>/`, `assets/thumbs-night/<area>/<id>.jpg` | Same, for night, generated by `tools/build_tiles.py --night`. |
+| `assets/gallery/<area>/<place-id>/` | You manage these photos by hand: create the folder, drop in `01.jpg`, `02.jpg`, ... Shared between day and night - no separate night gallery. |
+| `tools/build_tiles.py` | Run it, don't edit it (unless you're changing the tiling itself - see README section 4, "Add or replace a panorama"). `--night` switches it to the night folders. |
 
 `<area>` is never typed by hand anywhere - it's always the chapter's Italian name (`nameIt`),
 lowercased with spaces turned into dashes (e.g. "La Torre" -> `la-torre`). Both the website and the
 build script compute it the same way from `js/scenes.js`, so they can't drift apart.
 
-## 4. Checklist - adding a new place
+## 5. Checklist - adding a new place
 
 - [ ] Photo is equirectangular, 2:1, saved into `images/` (create that folder if it doesn't exist)
 - [ ] Worked out its `id` from the filename (lowercase, letters and digits only)
@@ -316,17 +408,23 @@ build script compute it the same way from `js/scenes.js`, so they can't drift ap
 - [ ] `pending: true` removed
 - [ ] Hard refresh (Ctrl+F5) to check it; `?v=` bumped in `index.html` before deploying
 - [ ] (optional) Gallery folder created and `gallery` field added
+- [ ] (optional) Night version added: photo confirmed to be the same spot, `images-night/<id>.jpg`,
+      `python tools/build_tiles.py --night`, `night.positions` / `night.view` set with `?edit=1` in
+      night mode (see part 3)
 
-## 5. Troubleshooting specific to this
+## 6. Troubleshooting specific to this
 
 - **`unknown chapter - add this scene to js/scenes.js first, then re-run`** when running
   `build_tiles.py`: the scene's `id` / `chapter` aren't in `scenes.js` yet, the `id` doesn't match
   the filename, or `id` and `chapter` aren't next to each other in the entry (see step 4's rules).
 - **The new place doesn't show up anywhere**: it still has `pending: true`, or its `chapter` value
   doesn't match any `id` in the `chapters` array (typo, most often).
+- **A night place has no hotspots even though Areas/Previous-Next look right**: its `night.positions`
+  is empty, or (for a `nightOnly` place) `night.positions` was set but not also copied into `links` -
+  see part 3b.
 - **Its hotspot leads nowhere, or is missing**: check the `to` value in the neighbouring place's
   `links` array matches this place's `id` exactly.
-- **The Photos button doesn't appear for a gallery**: the `gallery.folder` path is wrong (compare it
+- **The Gallery button doesn't appear for a gallery**: the `gallery.folder` path is wrong (compare it
   letter-for-letter with the real folder), or the folder has no `01.jpg`, or the edit to
   `scenes.js` wasn't saved.
 - **Tiles built into the wrong area folder**: the `chapter` value on that scene doesn't say what you

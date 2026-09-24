@@ -32,7 +32,7 @@ window.TOUR = {
     startScene: "01parcheggio"
   },
 
-  // Contact details for the Inquire card and the Menu. DUMMY VALUES - replace with the real ones.
+  // Contact details for the Inquire card, the Menu and the Website button.
   contact: { phone: "+39 334 998 5447", email: "info@caladeibalcani.it", website: "https://www.caladeibalcani.it", hours: "Open every day, 9:00 to 19:00", hoursIt: "Aperto tutti i giorni, dalle 9:00 alle 19:00" },
 
   // Optional floor plan. Put the image in assets/ and give scenes a pin (x, y as % of the image).

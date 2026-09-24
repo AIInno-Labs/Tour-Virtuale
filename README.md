@@ -5,7 +5,9 @@ A browser-based 360 tour built with plain **HTML + CSS + JavaScript** and the fr
 There is no server, database, build step or third-party platform: upload the folder to any static host.
 Fonts are bundled too, so nothing is loaded from outside.
 
-- 42 places (outdoor areas and interiors) linked by walk-to arrows, in **Italian (default) and English**
+- 42 day places (outdoor areas and interiors) linked by walk-to hotspots, in **Italian (default) and English**
+- A separate **night view** with its own 38 places, own names, own area list and its own Previous / Next order - see
+  "Night view" below
 - Works on desktop, tablet and phone (touch drag, pinch, back gesture)
 - Photo galleries per place, area list, menu, contact card, readable share links
 
@@ -42,17 +44,24 @@ The original 12000 px panoramas (`images/`, about 2 GB) are **not** part of the 
 
 ## 3. How the tour behaves (for visitors)
 
-- **Welcome screen**: logo, one line of text and a *Start the tour* button. The background is the aerial panorama.
-- **Hotspots**: small bobbing arrows standing on the spot you can walk to. Hover one on desktop to see a thumbnail card
-  with the place name; on touch screens a name tag sits above the arrow.
-- **Changing place**: the view pushes forward toward the clicked arrow with a speed trail (no rotation). The new place
+- **Welcome screen**: logo, one line of text and a *Start the tour* button. The background is the aerial panorama, and it
+  is always the same photo whether the visitor is in day or night mode.
+- **Hotspots**: a flat, round direction pin standing on the spot you can walk to, with an arrow inside pointing the way -
+  no bobbing/idle animation, no hover-scale. Hover one on desktop to see a thumbnail card with the place name; on touch
+  screens a name tag sits above the pin.
+- **Changing place**: the view pushes forward toward the clicked pin with a speed trail (no rotation). The new place
   loads underneath while the push plays; the "360" pill fills like a progress bar; then the trail dissolves.
-- **Auto-rotate** is on by default and pauses while you drag or hover an arrow (play/pause button in the top bar).
-- **Photos**: places that have a gallery show a Photos button in the top bar. The gallery opens as a grid that keeps every
-  photo's own proportions; clicking a photo opens it large with a thumbnail strip underneath.
+- **Auto-rotate** is on by default and pauses while you drag or hover a hotspot (play/pause button in the top bar).
+- **Gallery**: places that have a photo gallery show a Gallery button in the top bar. The gallery opens as a grid that
+  keeps every photo's own proportions; clicking a photo opens it large with a thumbnail strip underneath. Galleries work
+  the same in day and night mode.
 - **Language**: the round IT / EN button (always visible) switches the whole interface and place names; the choice is remembered.
-- **Day / night**: a sun / moon button (top right on desktop and tablet, inside the Menu on phones). It starts from the visitor's
-  system theme. **It only records the choice for now** - see "Connecting night panoramas" below.
+- **Day / night**: a sun / moon button (top right on desktop and tablet, inside the Menu on phones) switches to a
+  completely separate night tour - its own places, names, area list and Previous / Next order (only the photo gallery is
+  shared between the two). If the current place has no night photo, it jumps to the nearest place (in tour order) that
+  does. The choice is remembered across visits (like the language), and *Start the tour* (welcome screen button or Menu)
+  opens the first place of whichever tour - day or night - is currently selected. See "Night view" below for how the data
+  is put together.
 - **Share links** use the place name and follow the language: `#oak-tree-2` (English) or `#quercia-2` (Italian).
   Old links with the file code (`#18quercia2`) still work. The browser back button / back gesture walks back through places.
 
@@ -60,9 +69,9 @@ The original 12000 px panoramas (`images/`, about 2 GB) are **not** part of the 
 
 | Screen | Layout |
 |---|---|
-| Desktop / laptop | Top left: logo, Back, Areas. Top right: Photos, Pause/Play, Fullscreen, Day/Night, Language, Inquire, Menu. Bottom left: place name with Previous / Next. Bottom centre: 360 pill (look left / right). Bottom right: zoom. |
+| Desktop / laptop | Top left: logo, Back, Areas. Top right: Gallery, Pause/Play, Fullscreen, Day/Night, Language, Website, Inquire, Menu. Bottom left: place name with Previous / Next. Bottom centre: 360 pill (look left / right). Bottom right: zoom. |
 | Tablet (up to 1024 px) | Same, with icon-only buttons and a smaller place name. |
-| Phone (up to 700 px) | Top left: logo and name (wraps to two lines). Top right: Photos, Pause/Play, Fullscreen, Language, Menu. Bottom left: place name with Previous / Next. Bottom right: round Areas button. Inquire and Day/Night live in the Menu. There is no Back button: use the phone's back gesture. |
+| Phone (up to 700 px) | Top left: logo and name (wraps to two lines). Top right: Pause/Play, Fullscreen, Language, Website, Menu. Bottom left: place name with Previous / Next. Bottom right: round Gallery and Areas buttons (Gallery sits to the left of Areas). Inquire and Day/Night live in the Menu. There is no Back button: use the phone's back gesture. |
 
 ### Keyboard
 
@@ -93,6 +102,9 @@ where the `images/` folder goes and exactly what to write and where - see **`INS
 | `links` | The arrows: `to` (destination id), `yaw`, `pitch` (where the arrow stands). |
 | `gallery` | Optional photo gallery: `folder` and `count` (how many numbered files to look for). |
 | `pending: true` | Optional: the panorama is not available yet. The place and every arrow leading to it stay hidden. Delete this line once the tiles exist. |
+| `night` | Optional: makes this place exist at night too. `{ positions, view, name, nameIt }` - see "Night view" below. A place with no `night` field simply does not exist in night mode. |
+| `homeOnly: true` | Only ever used once, for the welcome-screen background (`panohome`). Keeps a scene out of Areas and Previous / Next entirely. |
+| `nightOnly: true` | The opposite of `homeOnly`: a place that only exists at night, with no day photo at all (see "Night view"). |
 
 The order of the places in the list is also the order of the Previous / Next buttons.
 Fields that still appear in the file but are **no longer used**: `gallery.hotspot`, `home.start`, `contact.hours`, `contact.hoursIt`, `tagline`.
@@ -108,18 +120,18 @@ Fields that still appear in the file but are **no longer used**: `gallery.hotspo
 The viewer expects the tile layout the script produces (three levels: 512, 1536, 3072 px per cube face). If you change `LEVELS`
 in `tools/build_tiles.py` you must change `LEVELS` and `FACE_SIZE` at the top of `js/app.js` to match.
 
-### Move or add an arrow
+### Move or add a hotspot
 
 Open `index.html?edit=1`, click the exact spot in the panorama: a line like `{ to: "", yaw: 12, pitch: 5 }` is copied to the
-clipboard and shown on screen. Paste it into the place's `links` and fill in `to`. (Edit mode skips the welcome screen.)
+clipboard and shown on screen. Paste it into the place's `links` (or, in night mode, its `night.positions`) and fill in `to`.
+(Edit mode skips the welcome screen.)
 
 ### Photo galleries
 
 Each gallery reads `assets/gallery/<area>/<place-id>/01.jpg ... 10.jpg`. Missing numbers are skipped, so 4 photos work fine.
 Landscape and portrait both work and nothing is cropped. To give another place a gallery, add
-`gallery: { folder: "assets/gallery/<area>/<place-id>", count: 10 }` to it and put the photos in that folder.
-**The photos in the repository right now are stand-ins** rendered from the panoramas - replace them with the real photos using
-the same file names (JPG, about 1600 px on the long side).
+`gallery: { folder: "assets/gallery/<area>/<place-id>", count: 10 }` to it and put the photos in that folder. Galleries are
+shared between day and night mode - there is only ever one gallery per place, not a day and a night version.
 
 ### Texts and languages
 
@@ -136,8 +148,8 @@ opens), `view` (the background's opening direction), `startScene` (where *Start 
 
 ### Contact details
 
-`contact` in `js/scenes.js`: `phone` and `email`. **They are dummy values (`+39 000 000 0000`, `info@example.com`) - replace them.**
-The phone number appears in the Inquire card and at the bottom of the Menu; on phones it dials when tapped.
+`contact` in `js/scenes.js`: `phone`, `email` and `website`. They appear in the Inquire card, at the bottom of the Menu,
+and on the Website button in the top bar; on phones the phone number dials when tapped.
 
 ### Floor plan (optional)
 
@@ -149,20 +161,83 @@ A Plan button and a Floor plan menu entry then appear automatically.
 
 Variables at the top of `css/style.css` (`--abyss`, `--lagoon`, `--chalk` ...). The palette comes from the logo.
 
-### Connecting night panoramas (later)
+### Night view
 
-The day / night button already exists. To make it work: create night tiles with `tools/build_tiles.py`, add a night version to
-each place in `js/scenes.js`, and switch the tile source in `getScene` in `js/app.js` when `mode` changes (`setMode`).
+Night is a **second, independent tour** layered on top of the day one, not a reskin of it. A place's day identity
+(`id`, `chapter`, day `name`/`nameIt`, day `view`, day `links`) never changes; everything night-specific lives in one
+extra field, `night`, so the two can never leak into each other:
+
+```js
+{ id: "19sala1", chapter: "halls",
+  night: { positions: { "20sala2": { yaw: 4.9, pitch: 13.9 }, "18quercia2": { yaw: 175.8, pitch: 22.3 } },
+           view: { yaw: 4.9, pitch: 13.9 } },
+  name: "Hall 1", nameIt: "Sala 1",
+  view: { yaw: 3, pitch: 10 },
+  links: [{ to: "18quercia2", yaw: -180, pitch: 32 }, { to: "20sala2", yaw: 5, pitch: 26 }] },
+```
+
+| `night` field | Meaning |
+|---|---|
+| `positions` | The **only** source of hotspots shown in night mode: `{ "<destination id>": { yaw, pitch } }`. Independent of `links` - a night place can connect to different neighbours than its day version, or to a `nightOnly` place that has no day version at all. |
+| `view` | Opening direction in night mode. Always set it to face one of the place's own `positions` (a visitor should never open a night scene staring at the ground or a wall). |
+| `name` / `nameIt` | Optional: only needed when the place should be called something different at night than during the day (e.g. `10torre2` is "Tower 2" by day but "Tower 3" at night, because a night-only photo gets inserted before it). Leave them out and the day name is reused. |
+
+A place with no `night` field does not exist at night at all - it is skipped by every night-mode list (Areas, Previous /
+Next, hotspots). The welcome-screen background (`panohome`) is deliberately given no `night` field, which is what
+guarantees it looks identical in both modes.
+
+**A place that only exists at night** (a photo with no day equivalent) is a normal scene entry with `nightOnly: true`
+and no day `view`/`links` of its own - only `night.positions`/`night.view`, mirrored into `links` so both modes read
+consistent data:
+
+```js
+{ id: "torre2b", chapter: "tower", nightOnly: true,
+  night: { positions: { "10torre2": { yaw: 69.9, pitch: 9.8 }, "09torre1": { yaw: 165.9, pitch: 10.1 } },
+           view: { yaw: 69.9, pitch: 9.8 } },
+  name: "Tower 2", nameIt: "Torre 2",
+  links: [{ to: "10torre2", yaw: 69.9, pitch: 9.8 }, { to: "09torre1", yaw: 165.9, pitch: 10.1 }] },
+```
+
+**Building night tiles** uses the same script, one flag added, and a folder to the side of `images/`:
+
+```
+images-night/<id>.jpg              # e.g. images-night/19sala1.jpg - named after the scene id directly, no camera-name step
+python tools/build_tiles.py --night              # process only new night images
+python tools/build_tiles.py --night --force       # rebuild all night tiles
+python tools/build_tiles.py --night 19sala1       # rebuild one night image
+```
+
+This produces `assets/tiles-night/<area>/<id>/` and `assets/thumbs-night/<area>/<id>.jpg` (same `<area>` folder-naming
+rule as the day tiles). The site picks tiles-night/thumbs-night automatically for any scene that has a `night` field
+while night mode is on (`tileBase()` / `thumbSrc()` in `js/app.js`); a day-only place is simply never asked for its
+night tiles.
+
+**Matching a night photo to a place**: there is no shortcut for this - open each night panorama and the equivalent day
+panorama side by side and confirm it is really the same physical spot before naming the file after that place's `id`.
+Two night photos that look similar from a distance (e.g. two indoor hall shots) can still be genuinely different
+viewpoints - check pixel content, not just the general impression, before assuming a match.
+
+**Finding `night.positions` yaw/pitch values**: same tool as for day links - `index.html?edit=1`, in night mode, click
+the spot in the panorama.
+
+**Switching mode while touring**: `resolveNightTarget()` in `js/app.js` walks forward through the day order from the
+current place until it finds one with a `night` field, so toggling to night from a day-only place always lands
+somewhere sensible instead of showing an error. Toggling on the welcome screen never pre-navigates - it only remembers
+the choice - so *Start the tour* still plays the normal loading animation for whichever tour is selected.
+
+Night does **not** need to mirror day one-for-one: a chapter can have 2 night places where it has 5 day places, or a
+night-only place with nothing on the day side, and none of this affects the day tour.
 
 ## 5. Deploying
 
 Upload these to any static host:
 
 ```
-index.html   css/   js/   vendor/   assets/  (fonts, tiles, thumbs, gallery and the logos)
+index.html   css/   js/   vendor/   assets/  (fonts, tiles, tiles-night, thumbs, thumbs-night, gallery and the logos)
 ```
 
-(about 580 MB, almost all of it `assets/tiles/`). Do **not** upload `images/`, `tools/` or the client brief.
+(almost all of it `assets/tiles/` and `assets/tiles-night/`). Do **not** upload `images/`, `images-night/`,
+`images-night-raw/`, `tools/` or the client brief.
 
 - **Vercel**: import the repository, framework "Other", no build command, output directory = root.
 - **GitHub Pages**: Settings -> Pages -> branch `main`, folder `/ (root)`. All paths are relative and share links use `#`, so
@@ -172,17 +247,13 @@ index.html   css/   js/   vendor/   assets/  (fonts, tiles, thumbs, gallery and 
 
 ## 6. Status and known to-dos
 
-- **Contact details are dummy values** (see above).
-- **Gallery photos are stand-ins** rendered from the panoramas (see above).
-- **`12TorreDrone` is a provisional drone photo.** It has no picture data at the very top and behind the camera, so
-  `tools/build_tiles.py` fills those areas with a soft sky (`FIXES`). Replace the file when the new drone shot arrives
-  (and tune `home.view`).
+- **Night view is fully built**: 38 night places, their own Areas list and Previous / Next order, hotspots matched
+  against the client's reference tour, mode remembered across visits. See "Night view" above.
+- **`12TorreDrone`** was replaced with the client-supplied `Torre04.jpg`. If a future replacement photo also has blank
+  data at the very top / behind the camera, `tools/build_tiles.py` already fills that in (`FIXES`, keyed by file stem).
 - **`18Quercia2` (Oak Tree 2) was rebuilt from the reference tour's tiles** because the original file was missing. It is about the
   same resolution but was compressed twice. Replace it with the original: put `18Quercia2.jpg` in `images/` and run
   `python tools/build_tiles.py 18Quercia2`.
-- **Arrow positions and opening directions were copied from the reference tour** (`fotocantoro.it/calagiorno`) and should be checked
-  against the floor plan.
-- **Day / night is only a button** until night panoramas exist.
 - The source file names contain small numbering slips (two files with the same number, gaps at 18 and 38). They do not affect the tour.
 
 ## 7. Troubleshooting
@@ -191,6 +262,10 @@ index.html   css/   js/   vendor/   assets/  (fonts, tiles, thumbs, gallery and 
   `?v=` number on the three script tags and the stylesheet link in `index.html` (currently `?v=32`) so visitors get the new files.
 - **Blank screen / no tiles when opening `index.html`**: use a local server (section 1).
 - **A place does not appear in the menu**: its `id` does not match a folder in `assets/tiles/<area>/`, or it is marked `pending: true`.
-- **An arrow leads nowhere**: the `to` id does not exist or the target is `pending`; hidden targets are skipped silently.
-- **Arrows jump or hotspots look shifted after re-tiling**: `LEVELS` / `FACE_SIZE` in `js/app.js` must match `tools/build_tiles.py`.
+- **A hotspot leads nowhere**: the `to` id does not exist or the target is `pending`; hidden targets are skipped silently.
+- **Hotspots jump or look shifted after re-tiling**: `LEVELS` / `FACE_SIZE` in `js/app.js` must match `tools/build_tiles.py`.
 - **The transition feels too fast / slow or the trail too strong**: `PUSH`, `MAXS` and `MAXT` in the `goTo` function of `js/app.js`.
+- **A night hotspot is missing or points to the wrong place**: night hotspots come only from that scene's `night.positions`,
+  never from `links` - check `night.positions` has an entry for that destination, not the day `links` array.
+- **Toggling night mode does nothing / shows a toast**: no scene forward of the current one (in day order) has a `night`
+  field yet - see `resolveNightTarget()` in `js/app.js`.
