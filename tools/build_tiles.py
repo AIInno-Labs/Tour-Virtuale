@@ -3,10 +3,18 @@ Convert equirectangular 360 JPGs (images/) into Marzipano cube-map tiles (assets
 and small thumbnails (assets/thumbs/<area>/<id>.jpg). <area> is read from each scene's chapter in
 js/scenes.js, so a new panorama must have its scene entry (with the right chapter) added there first.
 
+Night panoramas work the same way, one folder to the side: put them in images-night/<id>.jpg
+(named directly after the scene id - there is no camera-name step for night, they are renamed by
+hand once matched to a place) and pass --night. They build into assets/tiles-night/<area>/ and
+assets/thumbs-night/<area>/, and are only used by places whose scenes.js entry has `night: true`.
+
 Usage:
-    python tools/build_tiles.py              # process only new images
-    python tools/build_tiles.py --force      # rebuild everything
-    python tools/build_tiles.py 05Pineta1    # rebuild one image (name without .jpg)
+    python tools/build_tiles.py                    # process only new day images
+    python tools/build_tiles.py --force             # rebuild all day tiles
+    python tools/build_tiles.py 05Pineta1            # rebuild one day image (name without .jpg)
+    python tools/build_tiles.py --night              # process only new night images
+    python tools/build_tiles.py --night --force      # rebuild all night tiles
+    python tools/build_tiles.py --night 11torre3     # rebuild one night image
 
 Requires: pip install opencv-python numpy
 """
@@ -20,9 +28,15 @@ import cv2
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "images")
-OUT_TILES = os.path.join(ROOT, "assets", "tiles")
-OUT_THUMBS = os.path.join(ROOT, "assets", "thumbs")
+# Set from argv here (module import time), not inside `if __name__ == "__main__"`: on Windows,
+# multiprocessing.Pool's worker processes re-import this module without the original argv, so the
+# --night choice has to travel to them via an environment variable instead, set before Pool() runs.
+if "--night" in sys.argv:
+    os.environ["BUILD_TILES_NIGHT"] = "1"
+NIGHT = os.environ.get("BUILD_TILES_NIGHT") == "1"
+SRC = os.path.join(ROOT, "images-night" if NIGHT else "images")
+OUT_TILES = os.path.join(ROOT, "assets", "tiles-night" if NIGHT else "tiles")
+OUT_THUMBS = os.path.join(ROOT, "assets", "thumbs-night" if NIGHT else "thumbs")
 SCENES_JS = os.path.join(ROOT, "js", "scenes.js")
 OUT_PREVIEW = os.environ.get("PREVIEW_DIR")  # optional: low-res equirect previews
 
@@ -197,7 +211,7 @@ if __name__ == "__main__":
         folder = SCENE_FOLDER.get(sid)
         return folder and os.path.isdir(os.path.join(OUT_TILES, folder, sid))
     todo = [f for f in files if force or not already_built(f)]
-    print(f"{len(todo)} of {len(files)} images to process", flush=True)
+    print(f"{'night' if NIGHT else 'day'}: {len(todo)} of {len(files)} images to process", flush=True)
     with Pool(3) as pool:
         for sid, status in pool.imap_unordered(build, todo):
             print(f"  {sid}: {status}", flush=True)

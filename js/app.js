@@ -9,6 +9,13 @@
   var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var TILES_DIR = 'assets/tiles/';
+  var TILES_DIR_NIGHT = 'assets/tiles-night/';
+  // 'day' or 'night' - which set of tiles getScene() / thumbSrc() build from. A place only has
+  // night tiles when its scenes.js entry says `night: true` (tileBase() falls back to day otherwise).
+  // See setMode() further down for what happens when the visitor switches. Remembered across visits,
+  // the same way the language choice is.
+  var mode = 'day';
+  try { if (localStorage.getItem('tour-mode') === 'night') mode = 'night'; } catch (e) {}
   var FACE_SIZE = 3072;
   var LEVELS = [
     { tileSize: 512, size: 512, fallbackOnly: true },
@@ -42,22 +49,39 @@
 
   /* ---------- data ---------- */
   var all = T.scenes.filter(function (s) { return !s.pending; });
-  // A homeOnly scene is just the picture behind the welcome screen: it stays out of the Areas list and Previous / Next.
-  var scenes = all.filter(function (s) { return !s.homeOnly; });
+  // A homeOnly scene is just the picture behind the welcome screen. A nightOnly scene exists only at
+  // night (no day photo) - see the night-mode data section further down. Neither belongs in the day
+  // Areas list or Previous / Next.
+  var scenes = all.filter(function (s) { return !s.homeOnly && !s.nightOnly; });
   var byId = {};
   scenes.forEach(function (s, i) { s.index = i; });
   all.forEach(function (s) { byId[s.id] = s; });
+  // Night is a separate place list, not the day list re-skinned: its own membership, its own order,
+  // its own names where a scene's night.name says so (falls back to the day name otherwise). A place
+  // with no night photo simply never appears here, and a nightOnly place (no day photo) never appears
+  // in `scenes` above. The two lists share ids only where the same real spot genuinely has both.
+  var nightScenes = all.filter(function (s) { return s.night; });
+  nightScenes.forEach(function (s, i) { s.nightIndex = i; });
+  function nightNm(s) { return (lang === 'it' && s.night.nameIt) || s.night.name || nm(s); }
   var chapterById = {};
   T.chapters.forEach(function (c) {
     c.scenes = scenes.filter(function (s) { return s.chapter === c.id; });
     c.scenes.forEach(function (s, i) { s.chIndex = i; });
+    c.nightScenes = nightScenes.filter(function (s) { return s.chapter === c.id; });
     // Assets (tiles / thumbnails / gallery photos) are grouped on disk by area, in an Italian-named folder
     // derived from the chapter's own name, so there is nothing extra to keep in sync.
     c.folder = slugify(c.nameIt);
     chapterById[c.id] = c;
   });
-  function tileBase(id) { return TILES_DIR + chapterById[byId[id].chapter].folder + '/' + id; }
-  function thumbSrc(scene) { return 'assets/thumbs/' + chapterById[scene.chapter].folder + '/' + scene.id + '.jpg'; }
+  function tileBase(id) {
+    var d = byId[id];
+    var base = (mode === 'night' && d.night) ? TILES_DIR_NIGHT : TILES_DIR;
+    return base + chapterById[d.chapter].folder + '/' + id;
+  }
+  function thumbSrc(scene) {
+    var base = (mode === 'night' && scene.night) ? 'assets/thumbs-night/' : 'assets/thumbs/';
+    return base + chapterById[scene.chapter].folder + '/' + scene.id + '.jpg';
+  }
   scenes.forEach(function (s) {
     slugToId[slugify(s.name)] = s.id;
     if (s.nameIt) slugToId[slugify(s.nameIt)] = s.id;
@@ -81,16 +105,31 @@
 
   var cache = {};
   var current = null;
+  // Day and night tiles for the same place are different Marzipano scenes (different image source),
+  // so each is cached under its own key rather than sharing one cache slot per place id.
+  function cacheKey(id) { return mode + '|' + id; }
 
   function getScene(id) {
     var d = byId[id];
     if (!d) return null;
-    if (cache[id]) return cache[id];
+    var key = cacheKey(id);
+    if (cache[key]) return cache[key];
     var source = Marzipano.ImageUrlSource.fromString(tileBase(id) + '/{z}/{f}/{y}/{x}.jpg');
     var view = new Marzipano.RectilinearView({ yaw: 0, pitch: 0, fov: defaultFov() }, limiter);
     var scene = viewer.createScene({ source: source, geometry: geometry, view: view, pinFirstLevel: true });
-    d.links.forEach(function (l) { addHotspot(scene, l.yaw, l.pitch, linkElement(l)); });
-    return (cache[id] = { data: d, scene: scene });
+    // In night mode, a night-tiled place's hotspots come entirely from its own night.positions - the
+    // real night-photo connections, matched against the reference tour - not from the day `links`.
+    // This matters both ways: a day link whose destination has no night photo must NOT get a hotspot
+    // here (it would silently dump the visitor onto a day photo without saying so), and a night
+    // connection that happens to have no matching day link must still get one.
+    var night = mode === 'night' && d.night;
+    var scenelinks = night
+      ? Object.keys(d.night.positions).map(function (to) { var p = d.night.positions[to]; return { to: to, yaw: p.yaw, pitch: p.pitch }; })
+      : d.links;
+    scenelinks.forEach(function (l) {
+      addHotspot(scene, l.yaw, l.pitch, linkElement(l));
+    });
+    return (cache[key] = { data: d, scene: scene });
   }
 
   function addHotspot(scene, yaw, pitch, el) {
@@ -151,8 +190,10 @@
 
   function linkElement(l) {
     var dest = byId[l.to];
-    // A link can carry its own name (label / labelIt); otherwise it shows the name of the place it leads to.
-    function linkName() { return (lang === 'it' && l.labelIt) || l.label || nm(dest); }
+    // The name shown follows whichever mode is active right now (destName), unless the link itself
+    // carries its own fixed label (used for the one day-only "Tower 4" shortcut to the aerial view).
+    function destName() { return (mode === 'night' && dest.night) ? nightNm(dest) : nm(dest); }
+    function linkName() { return (lang === 'it' && l.labelIt) || l.label || destName(); }
     var el = hotspotBase('hs-link', { label: linkName(), sub: nm(chapterById[dest.chapter]), thumb: thumbSrc(dest), prefetch: dest.id });
     el.addEventListener('click', function () {
       var r = el.querySelector('.hs-pin').getBoundingClientRect();
@@ -210,9 +251,10 @@
 
   var prefetched = {};
   function prefetchScene(id, tick) {
-    if (prefetched[id]) { if (tick) prefetched[id].then(function () { tick(1); }); return prefetched[id]; }
+    var key = cacheKey(id);
+    if (prefetched[key]) { if (tick) prefetched[key].then(function () { tick(1); }); return prefetched[key]; }
     var n = 0;
-    return (prefetched[id] = Promise.all('fblrud'.split('').map(function (f) {
+    return (prefetched[key] = Promise.all('fblrud'.split('').map(function (f) {
       return new Promise(function (res) {
         var im = new Image();
         im.onload = im.onerror = function () { n++; if (tick) tick(n / 6); res(); };
@@ -299,8 +341,9 @@
     opts = opts || {};
     var target = getScene(id);
     if (!target || (busy && !opts.instant)) return;
-    var v = opts.view || target.data.view || { yaw: 0, pitch: 0 };
-    var from = current && cache[current];
+    var nightView = mode === 'night' && target.data.night && target.data.night.view;
+    var v = opts.view || nightView || target.data.view || { yaw: 0, pitch: 0 };
+    var from = current && cache[cacheKey(current)];
     if (from === target) return;
     if (from && !opts.back && !opts.instant && !skipVisited) { visited.push(current); if (visited.length > 60) visited.shift(); }
     skipVisited = false;
@@ -388,20 +431,32 @@
   }
 
   function step(delta) {
-    var i = byId[current].index + delta;
-    if (i >= 0 && i < scenes.length) goTo(scenes[i].id);
+    var d = byId[current];
+    if (mode === 'night' && d.night) {
+      var ni = d.nightIndex + delta;
+      if (ni >= 0 && ni < nightScenes.length) goTo(nightScenes[ni].id);
+    } else {
+      var i = d.index + delta;
+      if (i >= 0 && i < scenes.length) goTo(scenes[i].id);
+    }
   }
 
   /* ---------- scene title, Areas list ---------- */
   function updateScene() {
     var d = byId[current];
+    var night = mode === 'night' && d.night;
     var ch = chapterById[d.chapter];
     $('#sceneChapter').textContent = nm(ch);
-    $('#sceneName').textContent = nm(d);
-    $('#btnPrev').disabled = d.index === 0;
-    $('#btnNext').disabled = d.index === scenes.length - 1;
+    $('#sceneName').textContent = night ? nightNm(d) : nm(d);
+    if (night) {
+      $('#btnPrev').disabled = d.nightIndex === 0;
+      $('#btnNext').disabled = d.nightIndex === nightScenes.length - 1;
+    } else {
+      $('#btnPrev').disabled = d.index === 0;
+      $('#btnNext').disabled = d.index === scenes.length - 1;
+    }
     $('#btnPhotos').hidden = !d.gallery;
-    document.title = nm(d) + ' - ' + T.name;
+    document.title = (night ? nightNm(d) : nm(d)) + ' - ' + T.name;
     var sc = $('#scene');
     sc.classList.remove('reveal');
     void sc.offsetWidth;
@@ -415,10 +470,12 @@
   }
 
   function buildAreas() {
+    var night = mode === 'night';
     var body = $('#areasBody');
     body.textContent = '';
     T.chapters.forEach(function (ch) {
-      if (!ch.scenes.length) return;
+      var list = night ? ch.nightScenes : ch.scenes;
+      if (!list.length) return;
       var sec = document.createElement('section');
       sec.className = 'chapter';
       var h = document.createElement('h3');
@@ -427,7 +484,7 @@
       sec.appendChild(h);
       var ol = document.createElement('ol');
       ol.className = 'route';
-      ch.scenes.forEach(function (s) {
+      list.forEach(function (s) {
         var li = document.createElement('li');
         var b = document.createElement('button');
         b.type = 'button';
@@ -435,7 +492,7 @@
         b.dataset.id = s.id;
         b.innerHTML = '<img loading="lazy" alt="" width="76" height="46"><b></b>';
         b.querySelector('img').src = thumbSrc(s);
-        b.querySelector('b').textContent = nm(s);
+        b.querySelector('b').textContent = night ? nightNm(s) : nm(s);
         b.addEventListener('click', function () {
           hideIntro();
           goTo(s.id);
@@ -495,10 +552,41 @@
       controls.registerMethod('key' + k[0], new Marzipano.KeyControlMethod(k[0], k[1], k[2], FRICTION), true);
     });
 
-  // Day / night: only the button for now. It starts from the visitor's system theme; the night walk is not connected yet.
-  var mode = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'night' : 'day';
+  // Day / night: not every place has a night photo. If the one you're on doesn't, night mode
+  // walks forward (in tour order, wrapping) to the nearest place that does.
+  function resolveNightTarget(id) {
+    var d = byId[id];
+    if (d && d.night) return id;
+    var n = scenes.length;
+    var start = (d && d.index != null) ? d.index : 0;
+    for (var i = 1; i <= n; i++) {
+      var cand = scenes[(start + i) % n];
+      if (cand.night) return cand.id;
+    }
+    return null; // no night tiles exist at all yet
+  }
+  function currentViewDeg() {
+    var v = viewer.view();
+    return { yaw: deg(v.yaw()), pitch: deg(v.pitch()) };
+  }
+  // Reload the place already on screen under the (just-changed) mode, keeping the exact direction
+  // you're facing. Deliberately bypasses goTo()'s "same id, do nothing" shortcut: id is unchanged,
+  // but the day and night scenes for that id are different Marzipano scene objects.
+  function swapMode(id, viewDeg) {
+    var target = getScene(id);
+    if (!target) return;
+    var nv = target.scene.view();
+    nv.setParameters({ yaw: rad(viewDeg.yaw), pitch: rad(viewDeg.pitch), fov: defaultFov() });
+    loadStart();
+    enter(target, id, 220, {});
+    waitStable(6000).then(loadDone);
+  }
+  function refreshThumbs() { buildAreas(); refreshMenu(); }
+
   function setMode(m) {
+    var prevMode = mode;
     mode = m;
+    try { localStorage.setItem('tour-mode', m); } catch (e) {}
     document.documentElement.setAttribute('data-mode', m);
     Array.prototype.forEach.call(document.querySelectorAll('#mDay, #mNight'), function (b) {
       b.setAttribute('aria-pressed', String(b.id === 'mDay' ? m === 'day' : m === 'night'));
@@ -506,6 +594,17 @@
     var label = t(m === 'day' ? 'toNight' : 'toDay'), btn = $('#btnMode');
     btn.setAttribute('data-tip', label);
     btn.setAttribute('aria-label', label);
+    if (m === prevMode) return;
+    refreshThumbs();
+    if (!current || document.body.classList.contains('intro-on')) return;
+    if (m === 'day') {
+      swapMode(current, currentViewDeg());
+    } else {
+      var targetId = resolveNightTarget(current);
+      if (!targetId) toast(t('noNightYet'));
+      else if (targetId === current) swapMode(current, currentViewDeg());
+      else goTo(targetId, { instant: true });
+    }
   }
   $('#btnMode').addEventListener('click', function () { setMode(mode === 'day' ? 'night' : 'day'); });
   $('#mDay').addEventListener('click', function () { setMode('day'); });
@@ -782,8 +881,12 @@
     skipVisited = true;
   }
 
+  // If night mode is already chosen on the welcome screen, "Start the tour" walks into the night
+  // tour (its first place, in night order) instead of the day tour's fixed starting place.
+  function startTourId() { return mode === 'night' ? nightScenes[0].id : T.home.startScene; }
+
   $('#brand').addEventListener('click', function () { closePanels(); showIntro(); });
-  $('#introStart').addEventListener('click', function () { hideIntro(); goTo(T.home.startScene); });
+  $('#introStart').addEventListener('click', function () { hideIntro(); goTo(startTourId()); });
 
   /* ---------- contact, menu, share, welcome text ---------- */
   var C = T.contact;
@@ -830,7 +933,7 @@
     if (T.map && T.map.image) $('[data-act="plan"]').hidden = false;
 
     var acts = {
-      start: function () { closePanels(); hideIntro(); goTo(T.home.startScene); },
+      start: function () { closePanels(); hideIntro(); goTo(startTourId()); },
       areas: function () { setPanel('areas', true); },
       aerial: function () { closePanels(); hideIntro(); goTo(T.home.aerial || T.home.scene); },
       galleries: function (b) { var open = gList.hidden; gList.hidden = !open; b.setAttribute('aria-expanded', String(open)); },
