@@ -32,9 +32,9 @@ then open http://localhost:8000 (or `http://localhost:8000/#hall-2` to open a pl
 | `js/i18n.js` | Interface texts in English and Italian | sometimes |
 | `js/app.js` | The viewer logic (navigation, transition, menu, gallery, language, URLs) | rarely |
 | `css/style.css` | All styling. Colours and fonts are variables at the top | sometimes |
-| `assets/tiles/<area>/` | The panoramas, cut into small tiles (one folder per place, grouped by area - see below) | generated |
-| `assets/thumbs/<area>/` | Small preview picture per place (menu list and hotspot cards), grouped by area | generated |
-| `assets/gallery/<area>/<place-id>/` | Extra photos per place (`01.jpg`, `02.jpg` ...) | **yes** |
+| `assets/tiles/<area>/`, `assets/tiles-night/<area>/` | The day / night panoramas, cut into small tiles (one folder per place, grouped by area - see below) | generated |
+| `assets/thumbs/<area>/`, `assets/thumbs-night/<area>/` | Small day / night preview picture per place (menu list and hotspot cards), grouped by area | generated |
+| `assets/gallery/<area>/<place-id>/`, `assets/gallery-night/<area>/<place-id>/` | Extra day / night photos per place (`01.jpg`, `02.jpg` ...) | **yes** |
 | `assets/` | Logo, emblem, browser-tab icon | when the logo changes |
 | `assets/fonts/` | Bodoni Moda, Instrument Sans, IBM Plex Mono (self-hosted) | no |
 | `vendor/marzipano.js` | The viewer library, unmodified | no |
@@ -57,11 +57,11 @@ The original 12000 px panoramas (`images/`, about 2 GB) are **not** part of the 
   the same in day and night mode.
 - **Language**: the round IT / EN button (always visible) switches the whole interface and place names; the choice is remembered.
 - **Day / night**: a sun / moon button (top right on desktop and tablet, inside the Menu on phones) switches to a
-  completely separate night tour - its own places, names, area list and Previous / Next order (only the photo gallery is
-  shared between the two). If the current place has no night photo, it jumps to the nearest place (in tour order) that
-  does. The choice is remembered across visits (like the language), and *Start the tour* (welcome screen button or Menu)
-  opens the first place of whichever tour - day or night - is currently selected. See "Night view" below for how the data
-  is put together.
+  completely separate night tour - its own places, names, area list, Previous / Next order, and even its own photo
+  galleries (a place's Gallery button shows its day photos in day mode and its night photos in night mode - never both).
+  If the current place has no night photo, it jumps to the nearest place (in tour order) that does. The choice is
+  remembered across visits (like the language), and *Start the tour* (welcome screen button or Menu) opens the first
+  place of whichever tour - day or night - is currently selected. See "Night view" below for how the data is put together.
 - **Share links** use the place name and follow the language: `#oak-tree-2` (English) or `#quercia-2` (Italian).
   Old links with the file code (`#18quercia2`) still work. The browser back button / back gesture walks back through places.
 
@@ -89,8 +89,7 @@ where the `images/` folder goes and exactly what to write and where - see **`INS
 ```js
 { id: "18quercia2", chapter: "garden", name: "Oak Tree 2", nameIt: "Quercia 2",
   view: { yaw: -171, pitch: -12 },
-  links: [{ to: "19sala1", yaw: -174, pitch: 13 }, { to: "16giardino2", yaw: 94, pitch: 19 }],
-  gallery: { folder: "assets/gallery/la-torre/11torre3", count: 10 } }
+  links: [{ to: "19sala1", yaw: -174, pitch: 13 }, { to: "16giardino2", yaw: 94, pitch: 19 }] }
 ```
 
 | Field | Meaning |
@@ -100,14 +99,14 @@ where the `images/` folder goes and exactly what to write and where - see **`INS
 | `name` / `nameIt` | English / Italian title. If `nameIt` is missing the English name is shown. Both also become the share link. |
 | `view` | Direction the visitor faces on arrival, in degrees. `yaw` 0 = centre of the picture, positive = right. `pitch` 0 = horizon, **positive = down**, negative = up. |
 | `links` | The arrows: `to` (destination id), `yaw`, `pitch` (where the arrow stands). |
-| `gallery` | Optional photo gallery: `folder` and `count` (how many numbered files to look for). |
 | `pending: true` | Optional: the panorama is not available yet. The place and every arrow leading to it stay hidden. Delete this line once the tiles exist. |
 | `night` | Optional: makes this place exist at night too. `{ positions, view, name, nameIt }` - see "Night view" below. A place with no `night` field simply does not exist in night mode. |
 | `homeOnly: true` | Only ever used once, for the welcome-screen background (`panohome`). Keeps a scene out of Areas and Previous / Next entirely. |
 | `nightOnly: true` | The opposite of `homeOnly`: a place that only exists at night, with no day photo at all (see "Night view"). |
 
+There is no `gallery` field - see "Photo galleries" below for why, and note that `count` doesn't exist anywhere either.
 The order of the places in the list is also the order of the Previous / Next buttons.
-Fields that still appear in the file but are **no longer used**: `gallery.hotspot`, `home.start`, `contact.hours`, `contact.hoursIt`, `tagline`.
+Fields that still appear in the file but are **no longer used**: `home.start`, `contact.hours`, `contact.hoursIt`, `tagline`.
 
 ### Add or replace a panorama
 
@@ -128,10 +127,38 @@ clipboard and shown on screen. Paste it into the place's `links` (or, in night m
 
 ### Photo galleries
 
-Each gallery reads `assets/gallery/<area>/<place-id>/01.jpg ... 10.jpg`. Missing numbers are skipped, so 4 photos work fine.
-Landscape and portrait both work and nothing is cropped. To give another place a gallery, add
-`gallery: { folder: "assets/gallery/<area>/<place-id>", count: 10 }` to it and put the photos in that folder. Galleries are
-shared between day and night mode - there is only ever one gallery per place, not a day and a night version.
+There is nothing to edit in `js/scenes.js` for a gallery - not even a `gallery` field. A gallery is **only** a folder
+of numbered photos; the site finds it (or doesn't) purely by looking for numbered files at one fixed, predictable
+path per place, mode-specific like tiles and thumbnails:
+
+```
+assets/gallery/<area>/<place-id>/1.jpg, 2.jpg, 3.jpg ...          <- day
+assets/gallery-night/<area>/<place-id>/1.jpg, 2.jpg, 3.jpg ...    <- night
+```
+
+`<area>` is the same chapter-derived folder every other asset for that place already uses. To add a gallery to a
+place that has none - or add/remove photos from one that already has one - **just add or delete numbered files in
+that folder**. Nothing else, ever: no `scenes.js` edit, no count to update, no build step, no refresh-and-hope. The
+Gallery button and the Menu's gallery list both discover what exists by checking (in the browser, on the fly) whether
+`1.jpg` through `20.jpg` exist in that folder and showing whichever ones do.
+
+A few things that follow from how that works:
+
+- **Numbers don't need to start at 1 or be consecutive.** `2.jpg`, `5.jpg`, `8.jpg` all show up fine even without a
+  `1.jpg` - every number from 1 to 20 is checked individually and whatever exists is shown, gaps and all. Deleting
+  one photo out of the middle later never hides the ones after it.
+- **20 is the current ceiling** per gallery (`GALLERY_MAX` in `js/app.js`) - raise that one constant if a place ever
+  needs more than 20 photos.
+- **Day and night galleries are completely independent folders**, and neither is a fallback for the other: in night
+  mode the Gallery button only ever reflects `assets/gallery-night/...`, in day mode only `assets/gallery/...`. A
+  place can have a day gallery, a night gallery, both, or neither.
+- **A place with no night panorama at all** (no `night` field in `scenes.js`) never needs a night gallery folder,
+  since a visitor can never reach that place while in night mode.
+- Landscape and portrait both work, nothing gets cropped.
+
+**Sorting raw photos into day/night**: there is no shortcut - open each photo and judge it by the same cue as the
+panoramas (daylight sky and no string lights on = day; dark sky, lit string lights/candles, or visible party lighting
+= night), then drop it into the matching folder.
 
 ### Texts and languages
 
@@ -233,7 +260,7 @@ night-only place with nothing on the day side, and none of this affects the day 
 Upload these to any static host:
 
 ```
-index.html   css/   js/   vendor/   assets/  (fonts, tiles, tiles-night, thumbs, thumbs-night, gallery and the logos)
+index.html   css/   js/   vendor/   assets/  (fonts, tiles, tiles-night, thumbs, thumbs-night, gallery, gallery-night and the logos)
 ```
 
 (almost all of it `assets/tiles/` and `assets/tiles-night/`). Do **not** upload `images/`, `images-night/`,

@@ -8,6 +8,15 @@
   var EDIT = /[?&]edit\b/.test(location.search);
   var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // A failed tile request (dropped connection, a request queue getting saturated right after a
+  // hotspot click or a day/night switch, ...) does get retried by Marzipano itself - but only after
+  // its default 10-second per-tile backoff, and only once something asks for that tile again. In
+  // that 10s window the scene looks fully loaded (title, controls, Previous/Next all work - the
+  // "stable" event only tracks whether requests have settled, not whether they succeeded) while the
+  // tile itself stays blank. TILE_RETRY_DELAY shortens that backoff so a dropped tile recovers in
+  // about a second instead of up to ten.
+  var TILE_RETRY_DELAY = 1200;
+
   var TILES_DIR = 'assets/tiles/';
   var TILES_DIR_NIGHT = 'assets/tiles-night/';
   // 'day' or 'night' - which set of tiles getScene() / thumbSrc() build from. A place only has
@@ -82,6 +91,13 @@
     var base = (mode === 'night' && scene.night) ? 'assets/thumbs-night/' : 'assets/thumbs/';
     return base + chapterById[scene.chapter].folder + '/' + scene.id + '.jpg';
   }
+  // A gallery folder is never declared in scenes.js - it lives at this one predictable path (same
+  // day/night, per-area convention as tiles and thumbnails) or it doesn't exist at all. Whether a
+  // place "has a gallery" is discovered purely by finding numbered photos there (see loadGallery).
+  function galleryFolder(scene) {
+    var base = (mode === 'night' && scene.night) ? 'assets/gallery-night/' : 'assets/gallery/';
+    return base + chapterById[scene.chapter].folder + '/' + scene.id;
+  }
   scenes.forEach(function (s) {
     slugToId[slugify(s.name)] = s.id;
     if (s.nameIt) slugToId[slugify(s.nameIt)] = s.id;
@@ -114,7 +130,7 @@
     if (!d) return null;
     var key = cacheKey(id);
     if (cache[key]) return cache[key];
-    var source = Marzipano.ImageUrlSource.fromString(tileBase(id) + '/{z}/{f}/{y}/{x}.jpg');
+    var source = Marzipano.ImageUrlSource.fromString(tileBase(id) + '/{z}/{f}/{y}/{x}.jpg', { retryDelay: TILE_RETRY_DELAY });
     var view = new Marzipano.RectilinearView({ yaw: 0, pitch: 0, fov: defaultFov() }, limiter);
     var scene = viewer.createScene({ source: source, geometry: geometry, view: view, pinFirstLevel: true });
     // In night mode, a night-tiled place's hotspots come entirely from its own night.positions - the
@@ -455,7 +471,8 @@
       $('#btnPrev').disabled = d.index === 0;
       $('#btnNext').disabled = d.index === scenes.length - 1;
     }
-    $('#btnPhotos').hidden = !d.gallery;
+    $('#btnPhotos').hidden = true;
+    updateGalleryButton(d);
     document.title = (night ? nightNm(d) : nm(d)) + ' - ' + T.name;
     var sc = $('#scene');
     sc.classList.remove('reveal');
@@ -535,6 +552,7 @@
       Object.keys(PANELS).forEach(function (k) { if (k !== id) setPanel(k, false); });
       var cur = el.querySelector('.stop.current');
       if (cur) cur.scrollIntoView({ block: 'center' });
+      if (id === 'menu' && galleryListDirty) buildGalleryList();
     }
   }
   function closePanels() { Object.keys(PANELS).forEach(function (k) { setPanel(k, false); }); }
@@ -671,13 +689,25 @@
     });
   }
 
-  function loadGallery(g) {
-    if (galleryCache[g.folder]) return galleryCache[g.folder];
+  // No count, no manifest: a gallery is just numbered photos (1.jpg, 2.jpg, ...) dropped straight into
+  // the folder, in any range up to GALLERY_MAX and with gaps allowed (deleting 6.jpg doesn't hide 7+).
+  // Whether a place "has a gallery" is exactly whatever this finds - nothing is declared in scenes.js.
+  var GALLERY_MAX = 20;
+  function loadGallery(folder) {
+    if (galleryCache[folder]) return galleryCache[folder];
     var srcs = [];
-    for (var n = 1; n <= (g.count || 10); n++) srcs.push(g.folder + '/' + ('0' + n).slice(-2) + '.jpg');
-    return (galleryCache[g.folder] = Promise.all(srcs.map(exists)).then(function (ok) {
+    for (var n = 1; n <= GALLERY_MAX; n++) srcs.push(folder + '/' + n + '.jpg');
+    return (galleryCache[folder] = Promise.all(srcs.map(exists)).then(function (ok) {
       return srcs.filter(function (s, i) { return ok[i]; });
     }));
+  }
+  // Called on every scene switch to (re)decide whether the Gallery button should show. Cheap after the
+  // first visit to a place, since loadGallery caches per folder. Guards against a slow check for a
+  // place the visitor has already navigated away from before it resolves.
+  function updateGalleryButton(d) {
+    loadGallery(galleryFolder(d)).then(function (list) {
+      if (byId[current] === d) $('#btnPhotos').hidden = !list.length;
+    });
   }
 
   function toast(msg) {
@@ -745,14 +775,14 @@
   window.addEventListener('resize', function () { clearTimeout(layoutTimer); layoutTimer = setTimeout(layoutGrid, 120); });
 
   function openGallery(d) {
-    if (!d.gallery) return;
-    loadGallery(d.gallery).then(function (list) {
-      if (!list.length) { toast(t('noPhotos', { folder: d.gallery.folder })); return; }
+    var folder = galleryFolder(d);
+    loadGallery(folder).then(function (list) {
+      if (!list.length) { toast(t('noPhotos', { folder: folder })); return; }
       return Promise.all(list.map(measure)).then(function (items) {
         items = items.filter(Boolean);
         if (!items.length) return;
         lb.items = items; lb.list = items.map(function (x) { return x.src; }); lb.i = 0; lb.d = d;
-        $('#lbTitle').textContent = nm(d);
+        $('#lbTitle').textContent = mode === 'night' && d.night ? nightNm(d) : nm(d);
         var strip = $('#lbStrip');
         strip.textContent = '';
         items.forEach(function (it, i) {
@@ -918,25 +948,42 @@
     } else toast(url);
   }
 
-  function buildMenu() {
-    var withGallery = scenes.filter(function (s) { return s.gallery; });
+  // The Gallery submenu has to ask every place in the current mode whether it has a gallery (there is
+  // no list of this anywhere - see galleryFolder). That is one loadGallery check per place, so it is
+  // only ever run when the Menu is actually opened (galleryListDirty), not on every mode/language
+  // change - loadGallery's own per-folder cache then makes repeat opens in the same mode instant.
+  var galleryListDirty = true;
+  function buildGalleryList() {
+    galleryListDirty = false;
     var gBtn = $('[data-act="galleries"]'), gList = $('#miGalList');
-    if (!withGallery.length) gBtn.hidden = true;
-    withGallery.forEach(function (s) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.dataset.gal = s.id;
-      b.innerHTML = '<img alt="" width="64" height="38"><span></span><small></small>';
-      b.querySelector('img').src = thumbSrc(s);
-      gList.appendChild(b);
+    var list = mode === 'night' ? nightScenes : scenes;
+    Promise.all(list.map(function (s) {
+      return loadGallery(galleryFolder(s)).then(function (photos) { return photos.length ? s : null; });
+    })).then(function (results) {
+      var withGallery = results.filter(Boolean);
+      gList.textContent = '';
+      gBtn.hidden = !withGallery.length;
+      withGallery.forEach(function (s) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.dataset.gal = s.id;
+        b.innerHTML = '<img alt="" width="64" height="38"><span></span><small></small>';
+        b.querySelector('img').src = thumbSrc(s);
+        b.querySelector('span').textContent = mode === 'night' && s.night ? nightNm(s) : nm(s);
+        b.querySelector('small').textContent = nm(chapterById[s.chapter]);
+        gList.appendChild(b);
+      });
     });
+  }
+
+  function buildMenu() {
     if (T.map && T.map.image) $('[data-act="plan"]').hidden = false;
 
     var acts = {
       start: function () { closePanels(); hideIntro(); goTo(startTourId()); },
       areas: function () { setPanel('areas', true); },
       aerial: function () { closePanels(); hideIntro(); goTo(T.home.aerial || T.home.scene); },
-      galleries: function (b) { var open = gList.hidden; gList.hidden = !open; b.setAttribute('aria-expanded', String(open)); },
+      galleries: function (b) { var gList = $('#miGalList'), open = gList.hidden; gList.hidden = !open; b.setAttribute('aria-expanded', String(open)); },
       plan: function () { setPanel('plan', true); },
       share: share,
       welcome: function () { closePanels(); showIntro(); }
@@ -950,11 +997,8 @@
   }
 
   function refreshMenu() {
-    Array.prototype.forEach.call(document.querySelectorAll('#miGalList [data-gal]'), function (b) {
-      var sc = byId[b.dataset.gal];
-      b.querySelector('span').textContent = nm(sc);
-      b.querySelector('small').textContent = nm(chapterById[sc.chapter]);
-    });
+    galleryListDirty = true;
+    if ($('#menu').classList.contains('open')) buildGalleryList();
   }
 
   function fillIntro() {

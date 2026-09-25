@@ -239,56 +239,60 @@ Refresh, and the lounge is now part of the tour.
 
 ## 2. Adding or replacing a photo gallery
 
-A gallery is just a folder of numbered JPGs plus one field on the place's `scenes.js` entry. Right
-now only one place has one: Tower 3 (`11torre3`, area `la-torre`), in
-`assets/gallery/la-torre/11torre3/`.
+**There is no code involved in this at all** - no `scenes.js` field, no count, no build step. A
+gallery is purely a folder of numbered photos sitting at one predictable path; the site checks
+whether numbered files exist there and shows whatever it finds. This is the whole reason it works
+this way: so whoever is adding photos later - client included - never has to open a code file.
 
-### Step 1 - Create the folder
+### Step 1 - Find (or create) the folder
 
-The gallery folder lives inside the *same area folder* as that place's tiles and thumbnail (same
-name, worked out the same way from the chapter's `nameIt` - see step 3 above). For a place in the
-Garden area (`garden` / "Giardino"), that's:
+The gallery folder lives inside the *same area folder* as that place's tiles and thumbnail (worked
+out the same way from the chapter's `nameIt` - see part 1, step 3). For a place in the Garden area
+(`garden` / "Giardino"):
 
 ```
-assets/gallery/giardino/<place-id>/
+assets/gallery/giardino/<place-id>/          <- day
+assets/gallery-night/giardino/<place-id>/    <- night (only if that place has a night version)
 ```
 
-Create that folder yourself - nothing generates it automatically.
+If the folder doesn't exist yet, just create it - there's no separate "register this gallery"
+step. The first photo you drop in it is all it takes.
 
-### Step 2 - Add the photos
+### Step 2 - Add the photos, named by number
 
-Put the photos in that folder, named `01.jpg`, `02.jpg`, `03.jpg` and so on:
+Name each photo with a plain number - `1.jpg`, `2.jpg`, `3.jpg` and so on - nothing else:
 
 - JPG format, roughly 1600 px on the long side is plenty.
 - Landscape and portrait both work - nothing gets cropped, each photo keeps its own proportions.
-- Numbers don't need to be contiguous; missing ones are just skipped. Start at `01`.
+- **Numbers don't need to start at 1 or be consecutive.** The site checks every number from 1 to 20
+  individually and shows whichever exist - `2.jpg`, `5.jpg`, `8.jpg` with nothing else is completely
+  fine. This also means deleting one photo from the middle later never hides the ones after it.
+- 20 is the current ceiling per gallery (`GALLERY_MAX` in `js/app.js`) - if a gallery will ever need
+  more than that, raise that one constant.
+- Sorting a batch of mixed photos first (which go in `assets/gallery/` vs `assets/gallery-night/`)?
+  Judge each one the same way as a night panorama: daylight sky, no string lights on = day photo;
+  dark sky, lit string lights/candles, or colored party lighting = night photo.
 
-### Step 3 - Point the scene at it
+### Step 3 - Check it
 
-In `js/scenes.js`, add (or edit) the `gallery` field on that place's entry:
-
-```js
-{ id: "18quercia2", chapter: "garden", name: "Oak Tree 2", nameIt: "Quercia 2",
-  view: { yaw: -171, pitch: -12 },
-  links: [ ... ],
-  gallery: { folder: "assets/gallery/giardino/18quercia2", count: 10 } },
-```
-
-- `folder` is the exact path from step 1.
-- `count` is how many numbered files to *look for* - it's fine to set it higher than you actually
-  have (say `count: 20` if you're not sure yet); files that don't exist are silently skipped, so it
-  only needs to be a safe upper bound.
-
-### Step 4 - Check it
-
-Refresh. A **Photos** button appears automatically in the top bar for that place (bottom-right on
-phones, next to Areas), and the gallery is listed in the Menu, as soon as `gallery` is set and at
-least one numbered photo exists.
+Refresh. A **Gallery** button appears automatically in the top bar for that place (bottom-right on
+phones, next to Areas), and the gallery is listed in the Menu - both discover it the same way, by
+checking that folder for numbered files. Nothing else to do, and nothing to undo if you remove every
+photo later - the button and Menu entry just stop appearing on their own.
 
 ### To remove a gallery
 
-Delete the `gallery: { ... }` field from the place's entry (and, if you like, delete the folder -
-it's no longer read once the field is gone).
+Delete the photos (or the whole folder). Once no numbered file exists there any more, the Gallery
+button and Menu entry for that place disappear automatically - no `scenes.js` edit either way.
+
+### Day vs. night galleries
+
+`assets/gallery/<area>/<place-id>/` and `assets/gallery-night/<area>/<place-id>/` are completely
+independent folders. A place can have only a day gallery, only a night one, both, or neither, and
+neither is ever used as a fallback for the other - in night mode the Gallery button only ever reads
+from the night folder, in day mode only from the day folder. A place with no night panorama at all
+(no `night` field in `scenes.js`) never needs a night gallery folder, since a visitor can never reach
+that place while in night mode anyway.
 
 ---
 
@@ -386,10 +390,10 @@ connected it to. As with day places, remember to bump `?v=` in `index.html` befo
 |---|---|
 | `images/` (create it yourself, project root) | Drop original full-size day panoramas here. Never uploaded/deployed. Safe to delete a photo once its tiles are built. |
 | `images-night/` (create it yourself, project root) | Same, for night panoramas - named directly after the scene id (no camera-name step). |
-| `js/scenes.js` | Add the chapter (if new), add the scene entry, set `view` / `links`, add the `gallery` field, add the `night` field for a night version. This is the only file you *must* edit for new content. |
+| `js/scenes.js` | Add the chapter (if new), add the scene entry, set `view` / `links`, add the `night` field for a night version. This is the only file you *must* edit for new content - galleries never touch it. |
 | `assets/tiles/<area>/<id>/`, `assets/thumbs/<area>/<id>.jpg` | Day tiles/thumb, generated by `tools/build_tiles.py`. Never edit these by hand or move them - re-run the script instead. |
 | `assets/tiles-night/<area>/<id>/`, `assets/thumbs-night/<area>/<id>.jpg` | Same, for night, generated by `tools/build_tiles.py --night`. |
-| `assets/gallery/<area>/<place-id>/` | You manage these photos by hand: create the folder, drop in `01.jpg`, `02.jpg`, ... Shared between day and night - no separate night gallery. |
+| `assets/gallery/<area>/<place-id>/`, `assets/gallery-night/<area>/<place-id>/` | You manage these photos entirely by hand, with no code edit either side: create the folder, drop in `1.jpg`, `2.jpg`, ... Day and night galleries are independent - see part 2. |
 | `tools/build_tiles.py` | Run it, don't edit it (unless you're changing the tiling itself - see README section 4, "Add or replace a panorama"). `--night` switches it to the night folders. |
 
 `<area>` is never typed by hand anywhere - it's always the chapter's Italian name (`nameIt`),
@@ -407,7 +411,7 @@ build script compute it the same way from `js/scenes.js`, so they can't drift ap
 - [ ] A link added *from* this place to a neighbour, and *from* that neighbour back to this place
 - [ ] `pending: true` removed
 - [ ] Hard refresh (Ctrl+F5) to check it; `?v=` bumped in `index.html` before deploying
-- [ ] (optional) Gallery folder created and `gallery` field added
+- [ ] (optional) Gallery folder created, numbered photos dropped in - no `scenes.js` edit needed
 - [ ] (optional) Night version added: photo confirmed to be the same spot, `images-night/<id>.jpg`,
       `python tools/build_tiles.py --night`, `night.positions` / `night.view` set with `?edit=1` in
       night mode (see part 3)
@@ -424,9 +428,10 @@ build script compute it the same way from `js/scenes.js`, so they can't drift ap
   see part 3b.
 - **Its hotspot leads nowhere, or is missing**: check the `to` value in the neighbouring place's
   `links` array matches this place's `id` exactly.
-- **The Gallery button doesn't appear for a gallery**: the `gallery.folder` path is wrong (compare it
-  letter-for-letter with the real folder), or the folder has no `01.jpg`, or the edit to
-  `scenes.js` wasn't saved.
+- **The Gallery button doesn't appear for a gallery**: the folder path doesn't exactly match the
+  `<area>/<place-id>` convention (compare it letter-for-letter, including day vs. night), or none of
+  the photos in it are named as plain numbers (`1.jpg`, not `photo1.jpg` or `01.JPG` - the extension
+  must be lowercase `.jpg` too), or the numbers are all above 20 (`GALLERY_MAX` in `js/app.js`).
 - **Tiles built into the wrong area folder**: the `chapter` value on that scene doesn't say what you
   think it does - double check it against the `chapters` array, then re-run
   `python tools/build_tiles.py <name> --force`.
