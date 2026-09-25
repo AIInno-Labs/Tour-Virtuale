@@ -34,15 +34,20 @@
 
   /* ---------- language ---------- */
   var I = window.I18N;
+  // English is the bare field (name, lead, ...); every other language is that field name plus this
+  // suffix (nameIt, nameFr, ...) - the one exception is the UI strings in I18N, which are already
+  // keyed by language code directly and need no suffix mapping at all.
+  var LANGS = ['it', 'en', 'fr', 'es', 'de'];
+  var NAME_SUFFIX = { it: 'It', fr: 'Fr', es: 'Es', de: 'De' };
   var lang = 'it';
-  try { if (localStorage.getItem('tour-lang') === 'en') lang = 'en'; } catch (e) {}
+  try { var savedLang = localStorage.getItem('tour-lang'); if (LANGS.indexOf(savedLang) !== -1) lang = savedLang; } catch (e) {}
   function t(key, vars) {
     var str = (I[lang] && I[lang][key]) || I.en[key] || key;
     if (vars) Object.keys(vars).forEach(function (k) { str = str.replace('{' + k + '}', vars[k]); });
     return str;
   }
-  function nm(o) { return (lang === 'it' && o.nameIt) || o.name; }
-  function pick(o, key) { return (lang === 'it' && o[key + 'It']) || o[key]; }
+  function nm(o) { var suf = NAME_SUFFIX[lang]; return (suf && o['name' + suf]) || o.name; }
+  function pick(o, key) { var suf = NAME_SUFFIX[lang]; return (suf && o[key + suf]) || o[key]; }
   var labelers = [];
 
   // Readable links: /#oak-tree-2 (English) or /#quercia-2 (Italian). Old links with the file code still work.
@@ -71,7 +76,7 @@
   // in `scenes` above. The two lists share ids only where the same real spot genuinely has both.
   var nightScenes = all.filter(function (s) { return s.night; });
   nightScenes.forEach(function (s, i) { s.nightIndex = i; });
-  function nightNm(s) { return (lang === 'it' && s.night.nameIt) || s.night.name || nm(s); }
+  function nightNm(s) { var suf = NAME_SUFFIX[lang]; return (suf && s.night['name' + suf]) || s.night.name || nm(s); }
   var chapterById = {};
   T.chapters.forEach(function (c) {
     c.scenes = scenes.filter(function (s) { return s.chapter === c.id; });
@@ -209,7 +214,7 @@
     // The name shown follows whichever mode is active right now (destName), unless the link itself
     // carries its own fixed label (used for the one day-only "Tower 4" shortcut to the aerial view).
     function destName() { return (mode === 'night' && dest.night) ? nightNm(dest) : nm(dest); }
-    function linkName() { return (lang === 'it' && l.labelIt) || l.label || destName(); }
+    function linkName() { var suf = NAME_SUFFIX[lang]; return (suf && l['label' + suf]) || l.label || destName(); }
     var el = hotspotBase('hs-link', { label: linkName(), sub: nm(chapterById[dest.chapter]), thumb: thumbSrc(dest), prefetch: dest.id });
     el.addEventListener('click', function () {
       var r = el.querySelector('.hs-pin').getBoundingClientRect();
@@ -507,7 +512,7 @@
         b.type = 'button';
         b.className = 'stop';
         b.dataset.id = s.id;
-        b.innerHTML = '<img loading="lazy" alt="" width="76" height="46"><b></b>';
+        b.innerHTML = '<span class="thumb"><img loading="lazy" alt="" width="76" height="46"><i class="gal-badge" hidden></i></span><b></b>';
         b.querySelector('img').src = thumbSrc(s);
         b.querySelector('b').textContent = night ? nightNm(s) : nm(s);
         b.addEventListener('click', function () {
@@ -520,6 +525,24 @@
       });
       sec.appendChild(ol);
       body.appendChild(sec);
+    });
+    areaBadgesDirty = true;
+    if ($('#areas').classList.contains('open')) updateAreaBadges();
+  }
+
+  // Small gallery-icon badge on a thumbnail's corner, shown only for places that actually have a
+  // gallery in the current mode. Same "ask loadGallery" discovery as the Gallery button itself (see
+  // galleryFolder/loadGallery below) - no separate flag anywhere - and same lazy-on-panel-open timing
+  // as the Menu's gallery list, so this never fires 40-odd background checks on every page load.
+  var areaBadgesDirty = true;
+  function updateAreaBadges() {
+    areaBadgesDirty = false;
+    Array.prototype.forEach.call(document.querySelectorAll('#areasBody .stop'), function (b) {
+      var s = byId[b.dataset.id];
+      loadGallery(galleryFolder(s)).then(function (list) {
+        var badge = b.querySelector('.gal-badge');
+        if (badge) badge.hidden = !list.length;
+      });
     });
   }
 
@@ -541,7 +564,7 @@
     });
   }
 
-  var PANELS = { areas: '#btnAreas', plan: '#btnMap', menu: '#btnMenu', inquire: '#btnInquire' };
+  var PANELS = { areas: '#btnAreas', plan: '#btnMap', menu: '#btnMenu', inquire: '#btnInquire', langMenu: '#btnLang' };
   function setPanel(id, open) {
     var el = document.getElementById(id);
     el.classList.toggle('open', open);
@@ -553,6 +576,7 @@
       var cur = el.querySelector('.stop.current');
       if (cur) cur.scrollIntoView({ block: 'center' });
       if (id === 'menu' && galleryListDirty) buildGalleryList();
+      if (id === 'areas' && areaBadgesDirty) updateAreaBadges();
     }
   }
   function closePanels() { Object.keys(PANELS).forEach(function (k) { setPanel(k, false); }); }
@@ -658,6 +682,7 @@
   $('#btnBack').addEventListener('click', goBack);
   document.addEventListener('click', function (e) {
     if ($('#inquire').classList.contains('open') && !e.target.closest('#inquire, #btnInquire')) setPanel('inquire', false);
+    if ($('#langMenu').classList.contains('open') && !e.target.closest('#langMenu, #btnLang')) setPanel('langMenu', false);
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-close]'), function (b) {
     b.addEventListener('click', function () { setPanel(b.dataset.close, false); });
@@ -1014,6 +1039,9 @@
     });
     $('#brandTag').textContent = t('tagline');
     $('#btnLang').textContent = lang.toUpperCase();
+    Array.prototype.forEach.call(document.querySelectorAll('#langList [data-lang]'), function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
+    });
     labelers.forEach(function (fn) { fn(); });
     buildAreas();
     refreshMenu();
@@ -1026,10 +1054,32 @@
     if (!$('#lightbox').hidden && lb.d) { $('#lbTitle').textContent = nm(lb.d); if (!$('#lightbox').classList.contains('viewing')) $('#lbCount').textContent = t('photoCount', { n: lb.list.length }); }
   }
 
-  $('#btnLang').addEventListener('click', function () {
-    lang = lang === 'it' ? 'en' : 'it';
+  function setLang(l) {
+    setPanel('langMenu', false);
+    if (LANGS.indexOf(l) === -1 || l === lang) return;
+    lang = l;
     try { localStorage.setItem('tour-lang', lang); } catch (e) {}
     applyLang();
+  }
+  // Anchored under the button itself (and re-centred on it), unlike the other .pop cards which
+  // always sit in the same top-right spot regardless of which button opened them.
+  function positionLangMenu() {
+    var btn = $('#btnLang'), pop = $('#langMenu');
+    var r = btn.getBoundingClientRect();
+    var w = pop.offsetWidth || 216;
+    var left = Math.max(12, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 12));
+    pop.style.left = left + 'px';
+    pop.style.right = 'auto';
+    pop.style.top = (r.bottom + 10) + 'px';
+  }
+  $('#btnLang').addEventListener('click', function () {
+    if (!$('#langMenu').classList.contains('open')) positionLangMenu();
+    togglePanel('langMenu');
+  });
+  window.addEventListener('resize', function () { if ($('#langMenu').classList.contains('open')) positionLangMenu(); });
+  $('#langList').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-lang]');
+    if (b) setLang(b.dataset.lang);
   });
 
   /* ---------- start ---------- */

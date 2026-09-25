@@ -5,7 +5,8 @@ A browser-based 360 tour built with plain **HTML + CSS + JavaScript** and the fr
 There is no server, database, build step or third-party platform: upload the folder to any static host.
 Fonts are bundled too, so nothing is loaded from outside.
 
-- 42 day places (outdoor areas and interiors) linked by walk-to hotspots, in **Italian (default) and English**
+- 42 day places (outdoor areas and interiors) linked by walk-to hotspots, in **five languages: Italian (default),
+  English, French, Spanish and German**
 - A separate **night view** with its own 38 places, own names, own area list and its own Previous / Next order - see
   "Night view" below
 - Works on desktop, tablet and phone (touch drag, pinch, back gesture)
@@ -56,8 +57,11 @@ The original 12000 px panoramas (`images/`, about 2 GB) are **not** part of the 
 - **Auto-rotate** is on by default and pauses while you drag or hover a hotspot (play/pause button in the top bar).
 - **Gallery**: places that have a photo gallery show a Gallery button in the top bar. The gallery opens as a grid that
   keeps every photo's own proportions; clicking a photo opens it large with a thumbnail strip underneath. Galleries work
-  the same in day and night mode.
-- **Language**: the round IT / EN button (always visible) switches the whole interface and place names; the choice is remembered.
+  the same in day and night mode. In the Areas list, a place with a gallery gets a small picture-icon badge in the
+  corner of its thumbnail - mode-specific, same as the button itself, so it only shows up when that place actually has
+  a gallery in whichever mode (day/night) is currently selected.
+- **Language**: the round code button (always visible, e.g. "IT") opens a dropdown of all five languages; picking one
+  switches the whole interface and every place name, and the choice is remembered across visits.
 - **Day / night**: a sun / moon button (top right on desktop and tablet, inside the Menu on phones) switches to a
   completely separate night tour - its own places, names, area list, Previous / Next order, and even its own photo
   galleries (a place's Gallery button shows its day photos in day mode and its night photos in night mode - never both).
@@ -98,7 +102,7 @@ where the `images/` folder goes and exactly what to write and where - see **`INS
 |---|---|
 | `id` | Must equal the tile folder name inside its area in `assets/tiles/<area>/`. It is the panorama file name in lowercase, without spaces, underscores or extension (`17_Quercia1.jpg` -> `17quercia1`). |
 | `chapter` | Key from `chapters` (groups the place in the Areas list). This also decides `<area>`: it is the chapter's `nameIt` turned into a folder name (spaces to dashes, lowercase) - e.g. chapter `tower` ("La Torre") stores its tiles under `assets/tiles/la-torre/`. `tools/build_tiles.py` works this out on its own by reading `chapters` here, so a new place only needs the right `chapter`, nothing to set by hand. |
-| `name` / `nameIt` | English / Italian title. If `nameIt` is missing the English name is shown. Both also become the share link. |
+| `name` / `nameIt` / `nameFr` / `nameEs` / `nameDe` | English / Italian / French / Spanish / German title. `name` is required; every other language falls back to it if missing. All become the share link in their own language. |
 | `view` | Direction the visitor faces on arrival, in degrees. `yaw` 0 = centre of the picture, positive = right. `pitch` 0 = horizon, **positive = down**, negative = up. |
 | `links` | The arrows: `to` (destination id), `yaw`, `pitch` (where the arrow stands). |
 | `pending: true` | Optional: the panorama is not available yet. The place and every arrow leading to it stay hidden. Delete this line once the tiles exist. |
@@ -173,10 +177,15 @@ panoramas (daylight sky and no string lights on = day; dark sky, lit string ligh
 
 ### Texts and languages
 
-- Interface texts (buttons, menu, hints): `js/i18n.js`, English and Italian side by side. Keep both languages complete.
+- Interface texts (buttons, menu, hints): `js/i18n.js`, all five languages side by side, same keys in each. Keep every
+  language complete - `t()` falls back to English for a missing key, which would silently leave English text mixed
+  into another language.
 - Place and area names: `name` / `nameIt` in `js/scenes.js`. Welcome sentence: `home.lead` / `home.leadIt`
   (words between `*stars*` are highlighted).
-- The Italian texts were written by us and should be read by a native speaker before launch.
+- The Italian texts were written by the client; French, Spanish and German were translated for this build (checked
+  against caladeibalcani.it's own multilingual site for consistent terminology, e.g. "Tour Sarrasine" / "Torre
+  Sarracena" / "Sarazenturm" for the tower) but **not yet reviewed by a native speaker of each language** - do that
+  before launch, same as the Italian text.
 
 ### Welcome screen
 

@@ -1,6 +1,6 @@
 /*
- * Interface texts in English (default) and Italian.
- * Place, area and welcome texts live in js/scenes.js (fields ending in "It").
+ * Interface texts in Italian, English, French, Spanish and German.
+ * Place, area and welcome texts live in js/scenes.js (fields ending in "It"/"Fr"/"Es"/"De").
  * {n}, {m}, {folder} are filled in by the code.
  */
 window.I18N = {
@@ -51,5 +51,77 @@ window.I18N = {
     linkCopied: "Link copiato",
     noPhotos: "Ancora nessuna foto in {folder}/. Aggiungi 01.jpg, 02.jpg ...",
     photoCount: "Galleria", photoN: "Foto {n}", closePhotos: "Chiudi le foto", prevPhoto: "Foto precedente", nextPhoto: "Foto successiva"
+  },
+  fr: {
+    tagline: "Visite virtuelle",
+    welcomeScreen: "Écran d'accueil",
+    back: "Retour", areas: "Zones", plan: "Plan", photos: "Photos", gallery: "Galerie",
+    pauseRotate: "Mettre en pause la rotation", playRotate: "Démarrer la rotation",
+    fullscreen: "Plein écran", language: "Langue", inquire: "Contact", website: "Site web", goWebsite: "Aller sur le site", inquireTip: "Appelez-nous ou écrivez-nous", menu: "Menu",
+    lookLR: "Regarder à gauche ou à droite", lookLeft: "Regarder à gauche", lookRight: "Regarder à droite",
+    previous: "Précédent", next: "Suivant", dayNight: "Jour ou nuit", toNight: "Passer à la nuit", toDay: "Passer au jour", day: "Jour", night: "Nuit", noNightYet: "La vue de nuit n'est pas encore prête.", zoomIn: "Zoomer", zoomOut: "Dézoomer", close: "Fermer",
+    eyebrow: "Une visite à 360°", chooseArea: "Choisissez une zone", start: "Commencer la visite",
+    hintDesktop: "Glissez pour regarder autour de vous. Survolez une flèche pour un aperçu, cliquez pour vous déplacer.",
+    hintTouch: "Glissez pour regarder autour de vous. Touchez une flèche pour vous y rendre.",
+    factPlaces: "lieux", factGalleries: "galeries photos", factViews: "vues",
+    inqKicker: "Contact", inqTitle: "Parlez à notre équipe", callNow: "Appeler maintenant", sendEmail: "Envoyer un email",
+    miStart: "Commencer la visite",
+    miAreas: "Tous les lieux",
+    miAerial: "Vue aérienne",
+    miGalleries: "Galerie",
+    miPlan: "Plan",
+    miShare: "Partager",
+    miWelcome: "Home",
+    linkCopied: "Lien copié",
+    noPhotos: "Pas encore de photos dans {folder}/. Ajoutez 01.jpg, 02.jpg ...",
+    photoCount: "Galerie", photoN: "Photo {n}", closePhotos: "Fermer les photos", prevPhoto: "Photo précédente", nextPhoto: "Photo suivante"
+  },
+  es: {
+    tagline: "Tour virtual",
+    welcomeScreen: "Pantalla de bienvenida",
+    back: "Atrás", areas: "Zonas", plan: "Plano", photos: "Fotos", gallery: "Galería",
+    pauseRotate: "Pausar la rotación", playRotate: "Iniciar la rotación",
+    fullscreen: "Pantalla completa", language: "Idioma", inquire: "Contacto", website: "Sitio web", goWebsite: "Ir al sitio web", inquireTip: "Llámanos o escríbenos", menu: "Menú",
+    lookLR: "Mirar a izquierda o derecha", lookLeft: "Mirar a la izquierda", lookRight: "Mirar a la derecha",
+    previous: "Anterior", next: "Siguiente", dayNight: "Día o noche", toNight: "Cambiar a noche", toDay: "Cambiar a día", day: "Día", night: "Noche", noNightYet: "La vista nocturna aún no está lista.", zoomIn: "Acercar", zoomOut: "Alejar", close: "Cerrar",
+    eyebrow: "Un recorrido de 360°", chooseArea: "Elige una zona", start: "Iniciar el recorrido",
+    hintDesktop: "Arrastra para mirar alrededor. Pasa el cursor sobre una flecha para ver una vista previa, haz clic para moverte.",
+    hintTouch: "Arrastra para mirar alrededor. Toca una flecha para ir allí.",
+    factPlaces: "lugares", factGalleries: "galerías de fotos", factViews: "vistas",
+    inqKicker: "Contacto", inqTitle: "Habla con nuestro equipo", callNow: "Llamar ahora", sendEmail: "Enviar un correo",
+    miStart: "Iniciar el recorrido",
+    miAreas: "Todos los lugares",
+    miAerial: "Vista aérea",
+    miGalleries: "Galería",
+    miPlan: "Plano",
+    miShare: "Compartir",
+    miWelcome: "Home",
+    linkCopied: "Enlace copiado",
+    noPhotos: "Aún no hay fotos en {folder}/. Añade 01.jpg, 02.jpg ...",
+    photoCount: "Galería", photoN: "Foto {n}", closePhotos: "Cerrar fotos", prevPhoto: "Foto anterior", nextPhoto: "Foto siguiente"
+  },
+  de: {
+    tagline: "Virtuelle Tour",
+    welcomeScreen: "Startbildschirm",
+    back: "Zurück", areas: "Bereiche", plan: "Grundriss", photos: "Fotos", gallery: "Galerie",
+    pauseRotate: "Rotation pausieren", playRotate: "Rotation starten",
+    fullscreen: "Vollbild", language: "Sprache", inquire: "Kontakt", website: "Webseite", goWebsite: "Zur Webseite", inquireTip: "Rufen Sie uns an oder schreiben Sie uns", menu: "Menü",
+    lookLR: "Nach links oder rechts schauen", lookLeft: "Nach links schauen", lookRight: "Nach rechts schauen",
+    previous: "Zurück", next: "Weiter", dayNight: "Tag oder Nacht", toNight: "Zur Nachtansicht wechseln", toDay: "Zur Tagesansicht wechseln", day: "Tag", night: "Nacht", noNightYet: "Die Nachtansicht ist noch nicht verfügbar.", zoomIn: "Vergrößern", zoomOut: "Verkleinern", close: "Schließen",
+    eyebrow: "Ein 360°-Rundgang", chooseArea: "Bereich wählen", start: "Rundgang starten",
+    hintDesktop: "Ziehen, um sich umzusehen. Fahren Sie über einen Pfeil für eine Vorschau, klicken Sie, um sich zu bewegen.",
+    hintTouch: "Ziehen, um sich umzusehen. Tippen Sie auf einen Pfeil, um dorthin zu gehen.",
+    factPlaces: "Orte", factGalleries: "Fotogalerien", factViews: "Ansichten",
+    inqKicker: "Kontakt", inqTitle: "Sprechen Sie mit unserem Team", callNow: "Jetzt anrufen", sendEmail: "E-Mail senden",
+    miStart: "Rundgang starten",
+    miAreas: "Alle Orte",
+    miAerial: "Luftaufnahme",
+    miGalleries: "Galerie",
+    miPlan: "Grundriss",
+    miShare: "Teilen",
+    miWelcome: "Home",
+    linkCopied: "Link kopiert",
+    noPhotos: "Noch keine Fotos in {folder}/. Fügen Sie 01.jpg, 02.jpg ... hinzu.",
+    photoCount: "Galerie", photoN: "Foto {n}", closePhotos: "Fotos schließen", prevPhoto: "Vorheriges Foto", nextPhoto: "Nächstes Foto"
   }
 };

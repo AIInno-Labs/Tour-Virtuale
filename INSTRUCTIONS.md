@@ -1,17 +1,127 @@
-# Adding a new place or a photo gallery - step-by-step
+# Adding photos and new places - step-by-step
 
-This file is a detailed walkthrough for three specific jobs: **adding a brand-new panorama (place)**
-to the tour, **adding or replacing a photo gallery**, and **giving a place a night version** (or
-adding a place that only exists at night). For everything else (colours, texts, deployment,
-troubleshooting in general) see `README.md`. Read `README.md` section 2 and 4 first if you haven't -
-this file assumes you know what `js/scenes.js` and `tools/build_tiles.py` are, and that you've read
-README's "Night view" section before starting on part 3 below.
+Two different jobs, for two different people:
 
-Every command below is run from the project's root folder (the one that contains `index.html`).
+- **Adding or removing photos in a gallery** - anyone can do this. No code, no software, just a web
+  browser and a GitHub login. Start at **Part 1** below - that's the whole job.
+- **Adding a brand-new 360° place, or a night version of an existing one** - this needs a developer,
+  since a new panorama has to be processed into tiles first. That's **Part 2** and **Part 3**.
+
+If you're only here to add photos, you can stop reading after Part 1 - nothing else in this file
+applies to you. If you're adding a new place, read `README.md` section 2 and 4 first; this file
+assumes you know what `js/scenes.js` and `tools/build_tiles.py` are for Parts 2 and 3.
 
 ---
 
-## 0. Before you start
+## Part 1 - Adding or removing gallery photos
+
+*No coding, no software to install - just a web browser and your GitHub login. This is the entire
+job, start to finish.*
+
+Every place in the tour already has two folders sitting ready for photos: one for daytime photos,
+one for night-time photos. Putting a photo into the right one is the whole task - there is nothing
+else to set up, nothing to rename, nothing to tell the website separately. A photo you upload
+appears on the live site automatically, usually within a minute.
+
+### Step 1 - Open the repository on GitHub
+
+Go to `github.com/AIInno-Labs/Tour-Virtuale` and sign in.
+
+### Step 2 - Find the right folder
+
+Every place's photos live at one of these two paths:
+
+```
+assets / gallery / <area> / <place>          <- daytime photos
+assets / gallery-night / <area> / <place>     <- night-time photos
+```
+
+On the GitHub page, click through the folders in order: **assets** -> **gallery** (or
+**gallery-night**, if it's a night photo) -> the area -> the place.
+
+"Area" here is just a folder name, and it matches the areas already on the site:
+
+| Area, as shown on the site | Folder name on GitHub |
+|---|---|
+| Arrival | `arrivo` |
+| Path to the Tower | `sentiero-della-torre` |
+| Pine Grove | `pineta` |
+| The Tower | `la-torre` |
+| Entrance & Atrium | `ingresso-e-atrio` |
+| Garden | `giardino` |
+| The Halls | `le-sale` |
+| Courtyard & Appetizers | `corte-e-antipasti` |
+| Stairs & Terraces | `scale-e-terrazze` |
+| Drover's Trail | `tratturo` |
+
+Not sure of the exact place folder name? Open that area's folder on GitHub - every place inside it
+is already listed by name, so you can just look for the right one.
+
+### Step 3 - Upload the photo(s)
+
+Once you're inside the right place's folder:
+
+1. Click the green **Add file** button (top right of the file list), then choose **Upload files**.
+2. Drag your photos in, or click "choose your files" and pick them - you can upload several at once.
+3. **Don't rename anything.** Whatever your camera or phone called the file is fine exactly as it is.
+4. Scroll down to the "Commit changes" box. Type a short note describing what you added (e.g. "Add
+   Tower 1 daytime photos") and click the green **Commit changes** button.
+
+### Step 4 - Wait about a minute, then check the site
+
+Committing the photo automatically starts a short process that updates that place's gallery. It
+normally finishes in well under a minute. After that, open the live site, go to that place, and the
+**Gallery** button (the picture icon in the top toolbar) will show your new photo - no other step.
+
+### Removing a photo
+
+Open the same folder on GitHub, click the photo you want gone, click the trash-can icon
+(**Delete file**), write a short commit message, and commit. It disappears from the site the same
+way, automatically, once that same short process finishes.
+
+### Which folder - day or night?
+
+Judge each photo by what it actually shows, the same way the panoramas were sorted:
+
+- **Bright sky, sunlight, no lights on** -> it's a day photo -> `assets/gallery/...`
+- **Dark sky, string lights/candles lit, evening party lighting** -> it's a night photo ->
+  `assets/gallery-night/...`
+
+A place only *has* a `gallery-night` folder if it actually has a night version on the site. If you
+don't see one when browsing, that place doesn't have night mode yet, and a night photo for it
+wouldn't be reachable by visitors anyway - it goes in `assets/gallery/` instead.
+
+### If a place's gallery folder doesn't exist yet
+
+This should only come up for a brand-new place added to the site after this system was set up (see
+Part 2). If browsing to `assets/gallery/<area>/` doesn't show that place's folder, you can create it
+in the same upload step: after clicking **Upload files**, click on the greyed-out filename shown in
+the upload box and type the folder path in front of it, for example:
+
+```
+giardino/20loungearea/my-photo.jpg
+```
+
+GitHub creates the `20loungearea` folder automatically the moment you commit - there's no separate
+"create a folder" button needed.
+
+### If something doesn't work
+
+- **Photo still isn't showing after a couple of minutes**: on the repository's GitHub page, click
+  the **Actions** tab near the top. Look for the most recent run named "Rebuild gallery manifests".
+  A green check means it finished - if the photo still isn't showing, double-check you uploaded to
+  the right place's folder. A red X means it failed (pass this to your developer). Still spinning
+  means it just needs a bit more time.
+- **Uploaded to the wrong place or the wrong folder (day/night)**: delete it from the wrong spot
+  ("Removing a photo" above) and upload it again to the right one.
+- **Photo appears sideways or upside down on the site**: rotate the photo file itself before
+  uploading - the site shows it exactly as it was uploaded.
+
+---
+
+## Before you start Part 2 or 3
+
+*(Only relevant from here on - if you only came here to add gallery photos, you're already done.)*
 
 **The `images/` folder does not exist in this project, and that's on purpose.** It would hold the
 original panoramas at full size (each one is 30-100 MB, an equirectangular JPG, 2:1 ratio - e.g.
@@ -45,7 +155,7 @@ pip install opencv-python numpy
 
 ---
 
-## 1. Adding a brand-new place (panorama)
+## Part 2 - Adding a brand-new place (panorama)
 
 There are five things involved, in this order: **the photo**, **its area**, **its entry in
 `js/scenes.js`**, **running the build script**, and **linking it to its neighbours**. The order
@@ -104,7 +214,7 @@ generated automatically from the chapter's `nameIt` (its Italian name) - e.g. ch
 ("La Torre") stores its tiles in `assets/tiles/la-torre/`. A new chapter `lounge` ("Zona Lounge")
 would store its tiles in `assets/tiles/zona-lounge/`. You never type this folder name anywhere -
 `tools/build_tiles.py` and the website both work it out from `nameIt` the same way, so they always
-agree.
+agree. (This is also the same folder name Part 1's gallery photos live under.)
 
 ### Step 4 - Add the place to `js/scenes.js`
 
@@ -233,86 +343,19 @@ finish its entry:
   links: [{ to: "16giardino2", yaw: 180, pitch: 6 }] },
 ```
 
-Refresh, and the lounge is now part of the tour.
+Refresh, and the lounge is now part of the tour. If it should have a photo gallery too, see Part 1
+above - once this place exists, its gallery folders can be created the same "type the path while
+uploading" way described there.
 
 ---
 
-## 2. Adding or replacing a photo gallery
-
-**There is no code involved in this at all** - no `scenes.js` field, no count, no renaming. Every
-place's gallery folder (day and night) already exists, pre-created, empty, waiting for photos. A
-gallery is just whatever photos are sitting in that folder, under whatever names they were uploaded
-with - a GitHub Action keeps a small `manifest.json` in each folder in sync automatically, and that's
-what the site actually reads (a static site can't list a folder's contents itself). This is the whole
-reason it works this way: so whoever is adding photos later - client included - never opens a code
-file, never renames anything, never creates a folder.
-
-### Step 1 - Open the right folder
-
-Every place's folder already exists at a predictable path (same area-folder convention as its tiles
-and thumbnail - see part 1, step 3):
-
-```
-assets/gallery/<area>/<place-id>/          <- day
-assets/gallery-night/<area>/<place-id>/    <- night (only exists if that place has a night version)
-```
-
-For a place in the Garden area (`garden` / "Giardino"), that's `assets/gallery/giardino/<place-id>/`.
-On github.com just browse into `assets` -> `gallery` (or `gallery-night`) -> the area -> the place id.
-
-### Step 2 - Drop the photos in, keep their names
-
-- Any filename - `IMG_4521.jpg`, `sunset photo.jpg`, whatever the camera or phone called it. Nothing
-  to rename, before or after uploading.
-- `.jpg`, `.jpeg`, `.png`, `.webp` and `.gif` are all recognised.
-- Landscape and portrait both work - nothing gets cropped, each photo keeps its own proportions.
-- Sorting a batch of mixed photos first (which go in `assets/gallery/` vs `assets/gallery-night/`)?
-  Judge each one the same way as a night panorama: daylight sky, no string lights on = day photo;
-  dark sky, lit string lights/candles, or colored party lighting = night photo.
-- On GitHub: **Add file -> Upload files**, drag photos in, write a commit message, **Commit changes**.
-
-### Step 3 - Wait for the Action, then check it
-
-The commit triggers `.github/workflows/gallery-manifests.yml` automatically (see the repo's Actions
-tab on GitHub to watch it run - it takes well under a minute). It rescans every gallery folder and
-commits the updated `manifest.json` files back. Once that second commit lands, refresh the site: a
-**Gallery** button appears automatically in the top bar for that place (bottom-right on phones, next
-to Areas), and it's listed in the Menu - both read straight from `manifest.json`. Nothing else to do.
-
-Testing locally before pushing? Run `python tools/build_gallery_manifests.py` yourself - it does the
-exact same scan the Action does, safe to run any time, and lets you see the result before committing.
-
-### To remove a gallery
-
-Delete the photo(s) (or the whole folder, or just leave the folder empty). Once `manifest.json` for
-that place is empty, the Gallery button and Menu entry disappear automatically - no `scenes.js` edit
-either way. This still needs a commit + the Action to run, same as adding a photo.
-
-### Day vs. night galleries
-
-`assets/gallery/<area>/<place-id>/` and `assets/gallery-night/<area>/<place-id>/` are completely
-independent folders. A place can have only a day gallery, only a night one, both, or neither, and
-neither is ever used as a fallback for the other - in night mode the Gallery button only ever reads
-`assets/gallery-night/.../manifest.json`, in day mode only `assets/gallery/.../manifest.json`. A place
-with no night panorama at all (no `night` field in `scenes.js`) has no `gallery-night` folder either -
-it was never pre-created, since a visitor can never reach that place while in night mode.
-
-### If a brand-new place is added later (see part 1)
-
-Its gallery folders don't exist yet, since they're only pre-created for places that existed when this
-was set up. Create `assets/gallery/<area>/<new-place-id>/` (and, if it has a night version,
-`assets/gallery-night/<area>/<new-place-id>/`) the same way GitHub lets you create any new path - type
-it as part of the filename when uploading the first photo, e.g. upload a file named
-`giardino/20loungearea/1.jpg` and GitHub creates that folder on commit.
-
----
-
-## 3. Adding a night version of a place
+## Part 3 - Adding a night version of a place
 
 Two cases: giving an existing day place a night photo too, and adding a place that only exists at
 night (no day equivalent). Both use the `night` field described in README's "Night view" section -
 read that first for what each part of `night` means. You need `images-night/` (create it next to
-`images/` - same "never uploaded" rule) and the same `pip install opencv-python numpy` from part 0.
+`images/` - same "never uploaded" rule) and the same `pip install opencv-python numpy` from before
+Part 2.
 
 ### 3a. Giving an existing day place a night photo
 
@@ -360,6 +403,11 @@ at night (common when a night-only photo gets inserted before it and everything 
 one - see `10torre2`, night name "Tower 3", for a real example), add `name` / `nameIt` inside the
 `night` object too. Otherwise the day name is reused automatically - do not repeat it for no reason.
 
+**Step 6 - Give it a night gallery folder, if you want one.** A `gallery-night` folder for this place
+is only created once it has a `night` field, so after this step is done, create
+`assets/gallery-night/<area>/<id>/` the same "type the path while uploading" way described in Part 1
+- it won't already exist.
+
 ### 3b. Adding a place that only exists at night
 
 Use this when a night photo has no day equivalent at all (e.g. a lounge area only visible with the
@@ -395,24 +443,24 @@ connected it to. As with day places, remember to bump `?v=` in `index.html` befo
 
 ---
 
-## 4. Quick reference
+## Part 4 - Quick reference
 
 | Where | What you do there |
 |---|---|
+| `assets/gallery/<area>/<place-id>/`, `assets/gallery-night/<area>/<place-id>/` | Already exist for every place that has one. Drop photos in (any filename) on GitHub and commit - the Action writes `manifest.json`, nothing else to do. See Part 1. |
+| `.github/workflows/gallery-manifests.yml`, `tools/build_gallery_manifests.py` | Run automatically on push; don't edit unless the gallery mechanism itself needs to change - see Part 1. |
 | `images/` (create it yourself, project root) | Drop original full-size day panoramas here. Never uploaded/deployed. Safe to delete a photo once its tiles are built. |
 | `images-night/` (create it yourself, project root) | Same, for night panoramas - named directly after the scene id (no camera-name step). |
 | `js/scenes.js` | Add the chapter (if new), add the scene entry, set `view` / `links`, add the `night` field for a night version. This is the only file you *must* edit for new content - galleries never touch it. |
 | `assets/tiles/<area>/<id>/`, `assets/thumbs/<area>/<id>.jpg` | Day tiles/thumb, generated by `tools/build_tiles.py`. Never edit these by hand or move them - re-run the script instead. |
 | `assets/tiles-night/<area>/<id>/`, `assets/thumbs-night/<area>/<id>.jpg` | Same, for night, generated by `tools/build_tiles.py --night`. |
-| `assets/gallery/<area>/<place-id>/`, `assets/gallery-night/<area>/<place-id>/` | Already exist for every place. Drop photos in (any filename) and commit - the Action writes `manifest.json`, nothing else to do. Day and night galleries are independent - see part 2. |
 | `tools/build_tiles.py` | Run it, don't edit it (unless you're changing the tiling itself - see README section 4, "Add or replace a panorama"). `--night` switches it to the night folders. |
-| `.github/workflows/gallery-manifests.yml`, `tools/build_gallery_manifests.py` | Run automatically on push; don't edit unless the gallery mechanism itself needs to change - see part 2. |
 
 `<area>` is never typed by hand anywhere - it's always the chapter's Italian name (`nameIt`),
 lowercased with spaces turned into dashes (e.g. "La Torre" -> `la-torre`). Both the website and the
 build script compute it the same way from `js/scenes.js`, so they can't drift apart.
 
-## 5. Checklist - adding a new place
+## Part 5 - Checklist - adding a new place
 
 - [ ] Photo is equirectangular, 2:1, saved into `images/` (create that folder if it doesn't exist)
 - [ ] Worked out its `id` from the filename (lowercase, letters and digits only)
@@ -423,29 +471,31 @@ build script compute it the same way from `js/scenes.js`, so they can't drift ap
 - [ ] A link added *from* this place to a neighbour, and *from* that neighbour back to this place
 - [ ] `pending: true` removed
 - [ ] Hard refresh (Ctrl+F5) to check it; `?v=` bumped in `index.html` before deploying
-- [ ] (optional) Gallery photos dropped into `assets/gallery/<area>/<id>/` (create the folder by typing
-      its path into the first upload's filename on GitHub - see part 2) - no `scenes.js` edit needed
+- [ ] (optional) Gallery photos uploaded on GitHub into `assets/gallery/<area>/<id>/` (create the
+      folder by typing its path into the first upload's filename - see Part 1) - no `scenes.js` edit needed
 - [ ] (optional) Night version added: photo confirmed to be the same spot, `images-night/<id>.jpg`,
       `python tools/build_tiles.py --night`, `night.positions` / `night.view` set with `?edit=1` in
-      night mode (see part 3)
+      night mode (see Part 3)
 
-## 6. Troubleshooting specific to this
+## Part 6 - Troubleshooting specific to this
 
 - **`unknown chapter - add this scene to js/scenes.js first, then re-run`** when running
   `build_tiles.py`: the scene's `id` / `chapter` aren't in `scenes.js` yet, the `id` doesn't match
-  the filename, or `id` and `chapter` aren't next to each other in the entry (see step 4's rules).
+  the filename, or `id` and `chapter` aren't next to each other in the entry (see Part 2 step 4's
+  rules).
 - **The new place doesn't show up anywhere**: it still has `pending: true`, or its `chapter` value
   doesn't match any `id` in the `chapters` array (typo, most often).
 - **A night place has no hotspots even though Areas/Previous-Next look right**: its `night.positions`
   is empty, or (for a `nightOnly` place) `night.positions` was set but not also copied into `links` -
-  see part 3b.
+  see Part 3b.
 - **Its hotspot leads nowhere, or is missing**: check the `to` value in the neighbouring place's
   `links` array matches this place's `id` exactly.
 - **The Gallery button doesn't appear for a gallery**: check the repo's Actions tab - the
   `gallery-manifests` workflow either hasn't run yet (give it under a minute after the commit) or
   failed; failing that, the folder path doesn't exactly match the `<area>/<place-id>` convention
   (compare it letter-for-letter, including day vs. night), or the file's extension isn't one
-  `IMAGE_EXTS` in `tools/build_gallery_manifests.py` recognises.
+  `IMAGE_EXTS` in `tools/build_gallery_manifests.py` recognises. See also Part 1's own
+  troubleshooting notes for the non-technical version of this.
 - **Tiles built into the wrong area folder**: the `chapter` value on that scene doesn't say what you
   think it does - double check it against the `chapters` array, then re-run
   `python tools/build_tiles.py <name> --force`.

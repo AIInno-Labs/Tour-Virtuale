@@ -8,7 +8,7 @@
   <meta name="description" content="Walk through Cala dei Balcani in 360 degrees: the pine grove, the stone tower, the halls and the terraces above the sea.">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="preload" href="assets/fonts/bodoni-moda-italic.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=36">
+  <link rel="stylesheet" href="css/style.css?v=40">
 </head>
 <body>
   <div id="pano" aria-label="360 degree panorama"></div>
@@ -34,7 +34,7 @@
         <button id="btnRotate" class="tool icon" type="button" data-tip="Auto-rotate" aria-label="Auto-rotate" aria-pressed="true"><i></i></button>
         <button id="btnFull" class="tool icon" type="button" data-tip="Fullscreen" aria-label="Fullscreen" data-i18n-tip="fullscreen"><i></i></button>
         <button id="btnMode" class="tool icon" type="button" data-tip="Night" aria-label="Night"><i></i></button>
-      <button id="btnLang" class="tool lang" type="button" data-i18n-tip="language" aria-label="Language">EN</button>
+      <button id="btnLang" class="tool lang" type="button" data-i18n-tip="language" aria-label="Language" aria-expanded="false" aria-controls="langMenu">IT</button>
       </nav>
       <a id="btnWebsite" class="tool primary" href="#" target="_blank" rel="noopener" data-tip="Go to website" data-i18n-tip="goWebsite"><i></i><span data-i18n="website">Website</span></a>
       <button id="btnInquire" class="tool primary" type="button" data-tip="Call or email us" data-i18n-tip="inquireTip" aria-expanded="false" aria-controls="inquire"><i></i><span data-i18n="inquire">Inquire</span></button>
@@ -94,6 +94,18 @@
     </div>
   </div>
 
+  <div id="langMenu" class="pop pop-lang" role="dialog" aria-label="Language" aria-hidden="true">
+    <button class="close" type="button" data-close="langMenu" aria-label="Close" data-i18n-label="close">&times;</button>
+    <p class="pop-kicker" data-i18n="language">Language</p>
+    <div id="langList" class="lang-list">
+      <button class="lang-row" type="button" data-lang="it" aria-pressed="true"><span class="lang-code">IT</span><span class="lang-name">Italiano</span></button>
+      <button class="lang-row" type="button" data-lang="en" aria-pressed="false"><span class="lang-code">EN</span><span class="lang-name">English</span></button>
+      <button class="lang-row" type="button" data-lang="fr" aria-pressed="false"><span class="lang-code">FR</span><span class="lang-name">Français</span></button>
+      <button class="lang-row" type="button" data-lang="es" aria-pressed="false"><span class="lang-code">ES</span><span class="lang-name">Español</span></button>
+      <button class="lang-row" type="button" data-lang="de" aria-pressed="false"><span class="lang-code">DE</span><span class="lang-name">Deutsch</span></button>
+    </div>
+  </div>
+
   <aside id="menu" class="panel panel-right" aria-hidden="true" aria-label="Menu">
     <header>
       <h2 data-i18n="menu">Menu</h2>
@@ -149,8 +161,8 @@
   </div>
 
   <script src="vendor/marzipano.js"></script>
-  <script src="js/i18n.js?v=36"></script>
-  <script src="js/scenes.js?v=36"></script>
-  <script src="js/app.js?v=36"></script>
+  <script src="js/i18n.js?v=40"></script>
+  <script src="js/scenes.js?v=40"></script>
+  <script src="js/app.js?v=40"></script>
 </body>
 </html>

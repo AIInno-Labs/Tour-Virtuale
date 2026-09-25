@@ -110,6 +110,20 @@ a.tool { text-decoration: none; }
 .pop-actions { display: flex; gap: 8px; }
 .pop .close { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; font-size: 26px; }
 
+/* ---------- language picker ---------- */
+/* Anchored under #btnLang and centred on it, not the top-right corner .pop normally uses - app.js
+   sets left/top inline (positionLangMenu()) each time it opens, so right must not fight that. */
+.pop-lang { width: min(216px, calc(100vw - 24px)); padding: 16px 12px; right: auto; transform-origin: 50% 0; transform: translateY(-8px) scale(.97); }
+.pop-lang .pop-kicker { margin: 0 8px 8px; }
+.lang-list { display: flex; flex-direction: column; gap: 2px; }
+.lang-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 10px; border-radius: 14px; text-align: left; transition: background .2s; }
+.lang-row:hover, .lang-row:focus-visible { background: rgba(243, 246, 244, .07); }
+.lang-code { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: rgba(243, 246, 244, .08);
+  font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--chalk); transition: background .2s, color .2s; }
+.lang-name { flex: 1; font-size: 15px; font-weight: 500; letter-spacing: .005em; }
+.lang-row[aria-pressed="true"] .lang-code { background: var(--lagoon); color: var(--abyss); }
+.lang-row[aria-pressed="true"] .lang-name { color: var(--lagoon); }
+
 /* ---------- menu drawer ---------- */
 .panel.panel-right { left: auto; right: 0; width: min(340px, 100vw); border-right: 0; border-left: 1px solid var(--hair); transform: translateX(102%); }
 .panel.panel-right.open { transform: none; }
@@ -244,11 +258,20 @@ a.tool { text-decoration: none; }
 .route { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 1px solid var(--hair); }
 .stop { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; padding: 6px 8px 6px 0; text-align: left; border-radius: 8px; }
 .stop::before { content: ""; position: absolute; left: -18px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: var(--abyss); border: 1px solid var(--salt); }
-.stop img { width: 76px; height: 46px; object-fit: cover; border-radius: 6px; background: var(--tide); }
+.stop .thumb { position: relative; flex: none; width: 76px; height: 46px; }
+.stop img { width: 76px; height: 46px; object-fit: cover; border-radius: 6px; background: var(--tide); display: block; }
 .stop b { flex: 1; font-size: 14px; font-weight: 500; }
 .stop:hover { background: rgba(243, 246, 244, .07); }
 .stop.current::before { background: var(--lagoon); border-color: var(--lagoon); box-shadow: 0 0 0 4px rgba(127, 227, 214, .22); }
 .stop.current b { color: var(--lagoon); }
+/* Gallery badge: a small corner marker, only shown (see updateAreaBadges in js/app.js) on a
+   thumbnail whose place actually has a gallery in the current day/night mode. */
+.gal-badge { position: absolute; right: 2px; bottom: 2px; width: 22px; height: 22px; border-radius: 7px;
+  background: var(--lagoon); box-shadow: 0 1px 4px rgba(0, 0, 0, .5); display: grid; place-items: center; }
+.gal-badge[hidden] { display: none; }
+.gal-badge::before { content: ""; width: 14px; height: 14px; background: var(--abyss);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Ccircle cx='9' cy='11' r='1.8'/%3E%3Cpath d='m21 16-5-5-8 8'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Ccircle cx='9' cy='11' r='1.8'/%3E%3Cpath d='m21 16-5-5-8 8'/%3E%3C/svg%3E") center/contain no-repeat; }
 #planWrap { margin: 8px 18px 24px; }
 #planWrap img { width: 100%; border-radius: 10px; background: #fff; }
 
