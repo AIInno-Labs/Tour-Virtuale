@@ -1,0 +1,33 @@
+name: Rebuild gallery manifests
+
+# Keeps assets/gallery*/**/manifest.json in sync with whatever photos actually sit in each folder,
+# so adding or deleting a gallery photo never needs a code change - just commit the photo itself.
+# Pushes made with the default GITHUB_TOKEN don't trigger further "on: push" runs, so this commiting
+# its own manifest.json changes back does not loop.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "assets/gallery/**"
+      - "assets/gallery-night/**"
+      - "tools/build_gallery_manifests.py"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build manifests
+        run: python3 tools/build_gallery_manifests.py
+
+      - name: Commit manifests if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update gallery manifests"
+          file_pattern: "assets/gallery/**/manifest.json assets/gallery-night/**/manifest.json"

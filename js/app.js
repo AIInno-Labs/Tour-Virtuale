@@ -678,27 +678,17 @@
   var galleryCache = {};
   var lb = { list: [], i: 0 };
 
-  function exists(src) {
-    return fetch(src, { method: 'HEAD' }).then(function (r) { return r.ok; }).catch(function () {
-      return new Promise(function (res) {
-        var im = new Image();
-        im.onload = function () { res(true); };
-        im.onerror = function () { res(false); };
-        im.src = src;
-      });
-    });
-  }
-
-  // No count, no manifest: a gallery is just numbered photos (1.jpg, 2.jpg, ...) dropped straight into
-  // the folder, in any range up to GALLERY_MAX and with gaps allowed (deleting 6.jpg doesn't hide 7+).
-  // Whether a place "has a gallery" is exactly whatever this finds - nothing is declared in scenes.js.
-  var GALLERY_MAX = 20;
+  // No field in scenes.js, no naming convention: a gallery is whatever photos are actually sitting in
+  // its folder, under whatever names they were uploaded with. That list comes from manifest.json, a
+  // plain file in the same folder listing those filenames - kept in sync automatically by a GitHub
+  // Action (.github/workflows/gallery-manifests.yml) every time photos are added or removed there, so
+  // nothing here ever needs to know a place "has a gallery" ahead of time.
   function loadGallery(folder) {
     if (galleryCache[folder]) return galleryCache[folder];
-    var srcs = [];
-    for (var n = 1; n <= GALLERY_MAX; n++) srcs.push(folder + '/' + n + '.jpg');
-    return (galleryCache[folder] = Promise.all(srcs.map(exists)).then(function (ok) {
-      return srcs.filter(function (s, i) { return ok[i]; });
+    return (galleryCache[folder] = fetch(folder + '/manifest.json').then(function (r) {
+      return r.ok ? r.json() : [];
+    }, function () { return []; }).then(function (names) {
+      return names.map(function (name) { return folder + '/' + encodeURIComponent(name); });
     }));
   }
   // Called on every scene switch to (re)decide whether the Gallery button should show. Cheap after the
