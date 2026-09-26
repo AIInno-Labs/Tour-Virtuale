@@ -62,12 +62,14 @@ The original 12000 px panoramas (`images/`, about 2 GB) are **not** part of the 
   a gallery in whichever mode (day/night) is currently selected.
 - **Language**: the round code button (always visible, e.g. "IT") opens a dropdown of all five languages; picking one
   switches the whole interface and every place name, and the choice is remembered across visits.
-- **Day / night**: a sun / moon button (top right on desktop and tablet, inside the Menu on phones) switches to a
-  completely separate night tour - its own places, names, area list, Previous / Next order, and even its own photo
-  galleries (a place's Gallery button shows its day photos in day mode and its night photos in night mode - never both).
-  If the current place has no night photo, it jumps to the nearest place (in tour order) that does. The choice is
-  remembered across visits (like the language), and *Start the tour* (welcome screen button or Menu) opens the first
-  place of whichever tour - day or night - is currently selected. See "Night view" below for how the data is put together.
+- **Day / night**: chosen once, on the welcome screen, and fixed for the rest of the visit - there is no in-tour
+  toggle. The welcome screen has two buttons, *Start by day* and *Start by night*, each opening a completely separate
+  tour: its own places, names, area list, Previous / Next order, and even its own photo galleries (a place's Gallery
+  button shows its day photos on the day tour, its night photos on the night tour - never both). Whichever one is
+  picked is remembered across visits (like the language), so returning visitors land back in the same mode; going back
+  Home and picking the other button is the only way to switch. *Start the tour* in the Menu (while already touring)
+  reopens the first place of whichever tour is currently active, without prompting again. See "Night view" below for
+  how the data is put together.
 - **Share links** use the place name and follow the language: `#oak-tree-2` (English) or `#quercia-2` (Italian).
   Old links with the file code (`#18quercia2`) still work. The browser back button / back gesture walks back through places.
 
@@ -75,9 +77,9 @@ The original 12000 px panoramas (`images/`, about 2 GB) are **not** part of the 
 
 | Screen | Layout |
 |---|---|
-| Desktop / laptop | Top left: logo, Back, Areas. Top right: Gallery, Pause/Play, Fullscreen, Day/Night, Language, Website, Inquire, Menu. Bottom left: place name with Previous / Next. Bottom centre: 360 pill (look left / right). Bottom right: zoom. |
+| Desktop / laptop | Top left: logo, Back, Areas. Top right: Gallery, Pause/Play, Fullscreen, Language, Website, Inquire, Menu. Bottom left: place name with Previous / Next. Bottom centre: 360 pill (look left / right). Bottom right: zoom. |
 | Tablet (up to 1024 px) | Same, with icon-only buttons and a smaller place name. |
-| Phone (up to 700 px) | Top left: logo and name (wraps to two lines). Top right: Pause/Play, Fullscreen, Language, Website, Menu. Bottom left: place name with Previous / Next. Bottom right: round Gallery and Areas buttons (Gallery sits to the left of Areas). Inquire and Day/Night live in the Menu. There is no Back button: use the phone's back gesture. |
+| Phone (up to 700 px) | Top left: logo and name (wraps to two lines). Top right: Pause/Play, Fullscreen, Language, Website, Menu. Bottom left: place name with Previous / Next. Bottom right: round Gallery and Areas buttons (Gallery sits to the left of Areas). Inquire lives in the Menu. There is no Back button: use the phone's back gesture. |
 
 ### Keyboard
 
@@ -267,10 +269,9 @@ viewpoints - check pixel content, not just the general impression, before assumi
 **Finding `night.positions` yaw/pitch values**: same tool as for day links - `index.html?edit=1`, in night mode, click
 the spot in the panorama.
 
-**Switching mode while touring**: `resolveNightTarget()` in `js/app.js` walks forward through the day order from the
-current place until it finds one with a `night` field, so toggling to night from a day-only place always lands
-somewhere sensible instead of showing an error. Toggling on the welcome screen never pre-navigates - it only remembers
-the choice - so *Start the tour* still plays the normal loading animation for whichever tour is selected.
+**Choosing mode**: there is no in-tour toggle - the welcome screen's *Start by day* / *Start by night* buttons are the
+only way in, each calling `setMode()` before navigating to that tour's own fixed starting place (`T.home.startScene`
+for day, `nightScenes[0].id` for night), so the visitor always lands on a real place, not a "nearest available" guess.
 
 Night does **not** need to mirror day one-for-one: a chapter can have 2 night places where it has 5 day places, or a
 night-only place with nothing on the day side, and none of this affects the day tour.
@@ -316,8 +317,6 @@ Actions enabled, regardless of which host the *site* is served from.
 - **The transition feels too fast / slow or the trail too strong**: `PUSH`, `MAXS` and `MAXT` in the `goTo` function of `js/app.js`.
 - **A night hotspot is missing or points to the wrong place**: night hotspots come only from that scene's `night.positions`,
   never from `links` - check `night.positions` has an entry for that destination, not the day `links` array.
-- **Toggling night mode does nothing / shows a toast**: no scene forward of the current one (in day order) has a `night`
-  field yet - see `resolveNightTarget()` in `js/app.js`.
 - **A gallery photo doesn't appear on the site even though the file is in the right folder**: its `manifest.json`
   hasn't caught up yet - check the Action ran (repo's Actions tab on GitHub) and actually committed an updated
   `manifest.json` for that folder; if you're testing locally without pushing, run

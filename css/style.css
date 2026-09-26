@@ -168,6 +168,9 @@ a.tool { text-decoration: none; }
 .mi .chev { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 6 6 6-6 6'/%3E%3C/svg%3E"); }
 #menuPhone .ico i { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 4h3.5l1.8 4.6-2.3 1.4a11.5 11.5 0 0 0 6 6l1.4-2.3 4.6 1.8V19a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3 6.2 2 2 0 0 1 5 4z'/%3E%3C/svg%3E"); }
 #menuEmail .ico i { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Cpath d='m4 7 8 6 8-6'/%3E%3C/svg%3E"); }
+/* Welcome-screen Day/Night start buttons - mode is picked once, here, and fixed for the visit. */
+.disc-day i { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8'/%3E%3C/svg%3E"); }
+.disc-night i { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z'/%3E%3C/svg%3E"); }
 #mDay i { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8'/%3E%3C/svg%3E"); }
 #mNight i { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z'/%3E%3C/svg%3E"); }
 
@@ -294,14 +297,23 @@ body.intro-on #topLeft, body.intro-on #btnMap, body.intro-on #btnPhotos, body.in
 .ghost { height: 50px; padding: 0 24px; color: var(--chalk); border-radius: 999px; font-size: 15px; font-weight: 500; border: 1px solid var(--hair); background: var(--glass); transition: background .2s, border-color .2s; }
 .ghost:hover { background: var(--glass-strong); border-color: rgba(243, 246, 244, .5); }
 .cta.small, .ghost.small { height: 42px; padding: 0 18px; font-size: 14px; }
-.cta.big { height: 62px; gap: 20px; padding: 0 9px 0 32px; font-size: 18px; box-shadow: 0 14px 40px rgba(0, 0, 0, .35); }
+/* .cta.big and .ghost.big are only ever used together, as the welcome screen's paired Day/Night
+   start buttons - sized, weighted and animated identically so neither reads as more "primary" than
+   the other; only fill (solid vs outline) tells them apart. */
+.cta.big, .ghost.big { height: 62px; gap: 18px; padding: 0 10px 0 32px; font-size: 17px; min-width: 210px; }
+.cta.big { box-shadow: 0 14px 40px rgba(0, 0, 0, .35); }
 .cta.big:hover { box-shadow: 0 18px 46px rgba(127, 227, 214, .28); }
-.ghost.big { height: 62px; padding: 0 30px; font-size: 16px; }
-.disc { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--abyss); color: var(--chalk); transition: background .25s, color .25s; }
+.ghost.big:hover { box-shadow: 0 14px 36px rgba(0, 0, 0, .3); }
+.disc { position: relative; display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--abyss); color: var(--chalk); transition: background .25s, color .25s, transform .3s cubic-bezier(.2, .8, .2, 1); }
 .disc::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; border: 1px dashed rgba(243, 246, 244, .5); transition: transform .9s cubic-bezier(.3, .7, .2, 1); }
-.disc i { width: 20px; height: 20px; transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
-.cta.big:hover .disc::before { transform: rotate(180deg); }
-.cta.big:hover .disc i { transform: translateX(3px); }
+.disc i { width: 20px; height: 20px; }
+/* The night button sits on a dark, translucent .ghost fill, so its disc gets a lighter glass tint
+   and a teal-tinted icon instead of the day button's dark-on-light disc, or it would flatten into
+   the button behind it. */
+.disc-night { background: rgba(243, 246, 244, .1); border: 1px solid rgba(127, 227, 214, .35); color: var(--lagoon); }
+.cta.big:hover .disc, .ghost.big:hover .disc { transform: scale(1.08); }
+.cta.big:hover .disc::before, .ghost.big:hover .disc::before { transform: rotate(180deg); }
 .intro-hint { margin: 28px 0 0; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--salt); }
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
@@ -424,7 +436,7 @@ body.intro-on #pan { visibility: hidden; }
   .panel.panel-right { width: min(360px, 100vw); }
   #intro { padding: 76px 22px 40px; }
   .intro-eyebrow::before, .intro-eyebrow::after { width: 18px; }
-  .cta.big { height: 56px; padding-left: 26px; font-size: 17px; }
+  .cta.big, .ghost.big { height: 56px; padding-left: 26px; font-size: 16px; min-width: 0; }
   #lbImg { max-width: calc(100% - 16px); }
   #lbPrev, #lbNext { width: 40px; height: 40px; margin-top: -20px; background: rgba(13, 31, 45, .7); }
 }
@@ -454,6 +466,12 @@ body.intro-on #pan { visibility: hidden; }
 :root[data-mode="day"] #btnMode i { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8'/%3E%3C/svg%3E"); }
 :root[data-mode="night"] #btnMode i { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z'/%3E%3C/svg%3E"); }
 @media (max-width: 700px) { #btnMode { display: none; } }
+
+/* The in-tour day/night toggle (top bar + Menu) is hidden site-wide on purpose: day/night is chosen
+   only on the welcome screen now (see #introStartDay/#introStartNight). All of the toggle's own
+   markup, styling and JS logic above are left fully working - to bring it back, just delete this
+   one rule (and the "hidden" attribute on #btnMode / .menu-mode in index.html). */
+#btnMode, .menu-mode { display: none !important; }
 
 /* loading progress: the whole 360 pill fills while a new place loads, then returns to normal */
 #pan { overflow: hidden; isolation: isolate; }

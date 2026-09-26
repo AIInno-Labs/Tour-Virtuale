@@ -625,6 +625,11 @@
   }
   function refreshThumbs() { buildAreas(); refreshMenu(); }
 
+  // Day/night is now normally picked once on the welcome screen (see introStartDay/introStartNight
+  // below) and the in-tour toggle (#btnMode, #mDay/#mNight) is hidden site-wide - see the
+  // "toggle hidden on purpose" rule in css/style.css. The switching logic itself is left fully
+  // intact rather than deleted, so the toggle can be brought back just by removing that one CSS
+  // rule, with nothing here to rewire.
   function setMode(m) {
     var prevMode = mode;
     mode = m;
@@ -926,12 +931,21 @@
     skipVisited = true;
   }
 
-  // If night mode is already chosen on the welcome screen, "Start the tour" walks into the night
-  // tour (its first place, in night order) instead of the day tour's fixed starting place.
+  // "Start the tour" (from the Menu, once already touring) walks into whichever tour - day or
+  // night - is currently locked in: the night tour's first place in night order, or the day tour's
+  // fixed starting place.
   function startTourId() { return mode === 'night' ? nightScenes[0].id : T.home.startScene; }
 
   $('#brand').addEventListener('click', function () { closePanels(); showIntro(); });
-  $('#introStart').addEventListener('click', function () { hideIntro(); goTo(startTourId()); });
+  // The welcome screen has two separate buttons, not a toggle + one start button: day/night is
+  // decided right here and fixed for the rest of the visit, so each button sets its own mode first.
+  function startTourWithMode(m) {
+    setMode(m);
+    hideIntro();
+    goTo(startTourId());
+  }
+  $('#introStartDay').addEventListener('click', function () { startTourWithMode('day'); });
+  $('#introStartNight').addEventListener('click', function () { startTourWithMode('night'); });
 
   /* ---------- contact, menu, share, welcome text ---------- */
   var C = T.contact;
@@ -1024,7 +1038,6 @@
       if (i % 2) { var em = document.createElement('em'); em.textContent = part; lead.appendChild(em); }
       else lead.appendChild(document.createTextNode(part));
     });
-    $('#introStart .lbl').textContent = t('start');
     $('#introHint').textContent = t(touchOnly ? 'hintTouch' : 'hintDesktop');
   }
 
