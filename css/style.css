@@ -300,18 +300,33 @@ body.intro-on #topLeft, body.intro-on #btnMap, body.intro-on #btnPhotos, body.in
 /* .cta.big and .ghost.big are only ever used together, as the welcome screen's paired Day/Night
    start buttons - sized, weighted and animated identically so neither reads as more "primary" than
    the other; only fill (solid vs outline) tells them apart. */
-.cta.big, .ghost.big { height: 62px; gap: 18px; padding: 0 10px 0 32px; font-size: 17px; min-width: 210px; }
+.cta.big, .ghost.big { position: relative; overflow: hidden; isolation: isolate; height: 62px; gap: 18px; padding: 0 10px 0 32px; font-size: 17px; min-width: 210px; }
 .cta.big { box-shadow: 0 14px 40px rgba(0, 0, 0, .35); }
 .cta.big:hover { box-shadow: 0 18px 46px rgba(127, 227, 214, .28); }
 .ghost.big:hover { box-shadow: 0 14px 36px rgba(0, 0, 0, .3); }
-.disc { position: relative; display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%;
+/* Loading fill: the button that was clicked fills left-to-right with real load progress, exactly
+   the same mechanism as the #pan 360 pill (same --p variable convention), while the *other* button
+   is disabled so a second click mid-load can't start a second scene load. Day fills with the site's
+   dark navy (--tide) since the pill's teal barely shows against the white .cta - night keeps teal,
+   which already reads clearly against its dark .ghost fill. */
+.cta.big::before, .ghost.big::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  transform: scaleX(var(--p, 0)); transform-origin: 0 50%; opacity: 0;
+  transition: transform .3s cubic-bezier(.2, .7, .2, 1), opacity .5s ease .1s; }
+.cta.big::before { background: linear-gradient(90deg, rgba(23, 56, 77, .65), var(--tide)); }
+.ghost.big::before { background: linear-gradient(90deg, rgba(127, 227, 214, .38), rgba(127, 227, 214, .75)); }
+.cta.big.loading::before, .ghost.big.loading::before { opacity: 1; transition: transform .3s cubic-bezier(.2, .7, .2, 1), opacity .15s; }
+.cta.big.loading .lbl { color: var(--chalk); transition: color .2s ease .1s; }
+.cta.big:not(.loading)[disabled], .ghost.big:not(.loading)[disabled] { opacity: .4; pointer-events: none; }
+/* isolate + a fully opaque background (no rgba here) keeps the disc's own colour completely
+   unaffected by the fill sweeping behind it, at any progress amount, in either button. */
+.disc { position: relative; isolation: isolate; display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%;
   background: var(--abyss); color: var(--chalk); transition: background .25s, color .25s, transform .3s cubic-bezier(.2, .8, .2, 1); }
 .disc::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; border: 1px dashed rgba(243, 246, 244, .5); transition: transform .9s cubic-bezier(.3, .7, .2, 1); }
 .disc i { width: 20px; height: 20px; }
-/* The night button sits on a dark, translucent .ghost fill, so its disc gets a lighter glass tint
-   and a teal-tinted icon instead of the day button's dark-on-light disc, or it would flatten into
-   the button behind it. */
-.disc-night { background: rgba(243, 246, 244, .1); border: 1px solid rgba(127, 227, 214, .35); color: var(--lagoon); }
+/* The night button sits on a dark, translucent .ghost fill, so its disc gets a lighter tint and a
+   teal-tinted icon instead of the day button's dark-on-light disc, or it would flatten into the
+   button behind it - solid (not translucent) so the fill sweep can never show through it either. */
+.disc-night { background: #1c3a47; border: 1px solid rgba(127, 227, 214, .45); color: var(--lagoon); }
 .cta.big:hover .disc, .ghost.big:hover .disc { transform: scale(1.08); }
 .cta.big:hover .disc::before, .ghost.big:hover .disc::before { transform: rotate(180deg); }
 .intro-hint { margin: 28px 0 0; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--salt); }

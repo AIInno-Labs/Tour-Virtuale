@@ -374,8 +374,22 @@
     if (opts.instant || REDUCED || !from) {
       nv.setParameters({ yaw: rad(v.yaw), pitch: rad(v.pitch), fov: nf });
       loadStart();
-      enter(target, id, opts.instant ? 0 : 300, opts);
-      waitStable(6000).then(loadDone);
+      // deferReveal (welcome screen -> first tour scene only): stay on whatever is still on screen
+      // (the welcome overlay, logo/text/buttons and all - opts.beforeReveal is how the caller un-shows
+      // it at exactly the right moment) while the new scene's tiles load, and only cut to it once
+      // they're actually ready, instead of switching immediately and refining in the background like
+      // every other transition. A deliberate minimum wait is mixed in too, so on a fast connection
+      // this doesn't just flash by almost instantly.
+      if (opts.deferReveal) {
+        Promise.all([prefetchScene(id, opts.onProgress), wait(1200)]).then(function () {
+          if (opts.beforeReveal) opts.beforeReveal();
+          enter(target, id, 0, opts);
+          waitStable(6000).then(loadDone);
+        });
+      } else {
+        enter(target, id, opts.instant ? 0 : 300, opts);
+        waitStable(6000).then(loadDone);
+      }
       resumeRotate();
       return;
     }
@@ -939,13 +953,40 @@
   $('#brand').addEventListener('click', function () { closePanels(); showIntro(); });
   // The welcome screen has two separate buttons, not a toggle + one start button: day/night is
   // decided right here and fixed for the rest of the visit, so each button sets its own mode first.
-  function startTourWithMode(m) {
+  var startingTour = false;
+  function startTourWithMode(m, btn) {
+    if (startingTour) return;
+    startingTour = true;
     setMode(m);
-    hideIntro();
-    goTo(startTourId());
+    var otherBtn = btn.id === 'introStartDay' ? $('#introStartNight') : $('#introStartDay');
+    otherBtn.disabled = true;
+    btn.classList.add('loading');
+    btn.style.setProperty('--p', 0);
+    // The fill only reaches full while BOTH the real tile load and the deliberate minimum wait (see
+    // goTo's deferReveal) have finished, same as the Promise.all they're both feeding - otherwise a
+    // fast connection would fill the button to 100% almost at once and then just sit there for the
+    // rest of the minimum wait.
+    var tileP = 0, timeP = 0, t0 = performance.now(), MIN_MS = 1200;
+    function render() { btn.style.setProperty('--p', Math.max(.04, Math.min(tileP, timeP))); }
+    var timer = setInterval(function () { timeP = Math.min(1, (performance.now() - t0) / MIN_MS); render(); }, 60);
+    // instant + deferReveal: no speed-trail push (that's for in-tour hotspot clicks only) - the
+    // welcome screen (logo, text, both buttons) stays fully visible, unchanged, until the first
+    // scene is actually ready; hideIntro only runs then, right as goTo reveals it.
+    goTo(startTourId(), {
+      instant: true, deferReveal: true,
+      onProgress: function (p) { tileP = p; render(); },
+      beforeReveal: function () {
+        clearInterval(timer);
+        btn.classList.remove('loading');
+        btn.style.removeProperty('--p');
+        otherBtn.disabled = false;
+        startingTour = false;
+        hideIntro();
+      }
+    });
   }
-  $('#introStartDay').addEventListener('click', function () { startTourWithMode('day'); });
-  $('#introStartNight').addEventListener('click', function () { startTourWithMode('night'); });
+  $('#introStartDay').addEventListener('click', function () { startTourWithMode('day', this); });
+  $('#introStartNight').addEventListener('click', function () { startTourWithMode('night', this); });
 
   /* ---------- contact, menu, share, welcome text ---------- */
   var C = T.contact;
