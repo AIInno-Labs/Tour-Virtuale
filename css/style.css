@@ -483,10 +483,16 @@ body.intro-on #pan { visibility: hidden; }
 @media (max-width: 700px) { #btnMode { display: none; } }
 
 /* The in-tour day/night toggle (top bar + Menu) is hidden site-wide on purpose: day/night is chosen
-   only on the welcome screen now (see #introStartDay/#introStartNight). All of the toggle's own
+   only on the welcome screen (see #introStartDay/#introStartNight). All of the toggle's own
    markup, styling and JS logic above are left fully working - to bring it back, just delete this
    one rule (and the "hidden" attribute on #btnMode / .menu-mode in index.html). */
 #btnMode, .menu-mode { display: none !important; }
+
+/* Night tour temporarily hidden on the welcome screen too, at the client's request (day-only preview
+   for now) - #introStartNight, its click handler, setMode('night'), the whole night tour/data model
+   etc. are all still fully working underneath. To bring it back: delete this rule and the "hidden"
+   attribute on #introStartNight in index.html - nothing else needs to change. */
+#introStartNight { display: none !important; }
 
 /* loading progress: the whole 360 pill fills while a new place loads, then returns to normal */
 #pan { overflow: hidden; isolation: isolate; }
