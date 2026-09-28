@@ -2,8 +2,10 @@
 
 Two different jobs, for two different people:
 
-- **Adding or removing photos in a gallery** - anyone can do this. No code, no software, just a web
-  browser and a GitHub login. Start at **Part 1** below - that's the whole job.
+- **Adding or removing photos in a gallery** - anyone can do this. No code, just access to the
+  website's files (however you normally reach them - hosting control panel, FTP/SFTP, file manager,
+  a synced folder, or a code repository if that's what your host uses). Start at **Part 1** below -
+  that's the whole job.
 - **Adding a brand-new 360° place, or a night version of an existing one** - this needs a developer,
   since a new panorama has to be processed into tiles first. That's **Part 2** and **Part 3**.
 
@@ -15,17 +17,21 @@ assumes you know what `js/scenes.js` and `tools/build_tiles.py` are for Parts 2 
 
 ## Part 1 - Adding or removing gallery photos
 
-*No coding, no software to install - just a web browser and your GitHub login. This is the entire
-job, start to finish.*
+*No coding, no software to install beyond whatever you already use to reach the website's files.
+This is the entire job, start to finish.*
 
 Every place in the tour already has two folders sitting ready for photos: one for daytime photos,
-one for night-time photos. Putting a photo into the right one is the whole task - there is nothing
-else to set up, nothing to rename, nothing to tell the website separately. A photo you upload
-appears on the live site automatically, usually within a minute.
+one for night-time photos. A photo shows up in the site's Gallery the moment it's sitting in the
+right folder **and named with a plain number** - `1.jpg`, `2.jpg`, `3.jpg` and so on. That number is
+the only thing that matters; there is nothing to edit anywhere else on the site, and nothing about
+these steps depends on where or how the site is hosted.
 
-### Step 1 - Open the repository on GitHub
+### Step 1 - Open the website's files
 
-Go to `github.com/AIInno-Labs/Tour-Virtuale` and sign in.
+Get into wherever the live site's files actually sit - your hosting provider's file manager, an
+FTP/SFTP connection, a folder synced to your computer, or a code repository, whichever your setup
+uses. If you're not sure which of these applies to you, ask whoever set up the hosting - the folder
+structure below is the same regardless.
 
 ### Step 2 - Find the right folder
 
@@ -36,12 +42,12 @@ assets / gallery / <area> / <place>          <- daytime photos
 assets / gallery-night / <area> / <place>     <- night-time photos
 ```
 
-On the GitHub page, click through the folders in order: **assets** -> **gallery** (or
-**gallery-night**, if it's a night photo) -> the area -> the place.
+Open the folders in order: **assets** -> **gallery** (or **gallery-night**, if it's a night photo)
+-> the area -> the place.
 
 "Area" here is just a folder name, and it matches the areas already on the site:
 
-| Area, as shown on the site | Folder name on GitHub |
+| Area, as shown on the site | Folder name |
 |---|---|
 | Arrival | `arrivo` |
 | Path to the Tower | `sentiero-della-torre` |
@@ -54,30 +60,34 @@ On the GitHub page, click through the folders in order: **assets** -> **gallery*
 | Stairs & Terraces | `scale-e-terrazze` |
 | Drover's Trail | `tratturo` |
 
-Not sure of the exact place folder name? Open that area's folder on GitHub - every place inside it
-is already listed by name, so you can just look for the right one.
+Not sure of the exact place folder name? Open that area's folder - every place inside it is already
+listed by name, so you can just look for the right one.
 
-### Step 3 - Upload the photo(s)
+### Step 3 - Work out the next free number
 
-Once you're inside the right place's folder:
+Look at the filenames already in the folder (they'll be things like `1.jpg`, `2.jpg`, `3.jpg`).
+Whatever the highest number already there is, your new photo's number is the next one up. Folder
+empty? Your photo is `1.jpg`. Highest existing is `4.jpg`? Your photo is `5.jpg`. You can add
+several at once - just number them one after another (`5.jpg`, `6.jpg`, `7.jpg`...).
 
-1. Click the green **Add file** button (top right of the file list), then choose **Upload files**.
-2. Drag your photos in, or click "choose your files" and pick them - you can upload several at once.
-3. **Don't rename anything.** Whatever your camera or phone called the file is fine exactly as it is.
-4. Scroll down to the "Commit changes" box. Type a short note describing what you added (e.g. "Add
-   Tower 1 daytime photos") and click the green **Commit changes** button.
+### Step 4 - Rename the photo, then place it in the folder
 
-### Step 4 - Wait about a minute, then check the site
+1. On your computer, rename the photo file to that number plus `.jpg` - for example `5.jpg`. (If
+   your photo is a `.png` or `.jpeg`, keep that ending instead - just match the number to the next
+   free one, e.g. `5.png`.)
+2. Put the renamed file into that folder, the same way you'd add any file with your setup - upload
+   it, drag it in, or copy it over.
 
-Committing the photo automatically starts a short process that updates that place's gallery. It
-normally finishes in well under a minute. After that, open the live site, go to that place, and the
-**Gallery** button (the picture icon in the top toolbar) will show your new photo - no other step.
+The photo appears on the live site as soon as that file is in place - there's no waiting, no
+separate process that has to run first. Open the site, go to that place, and the **Gallery** button
+(the picture icon in the top toolbar) will show it.
 
 ### Removing a photo
 
-Open the same folder on GitHub, click the photo you want gone, click the trash-can icon
-(**Delete file**), write a short commit message, and commit. It disappears from the site the same
-way, automatically, once that same short process finishes.
+Delete that file from the same folder, the same way you'd delete any file with your setup. It
+disappears from the site the moment the file is gone. You don't need to renumber anything else -
+deleting `3.jpg` out of the middle doesn't hide `4.jpg` or `5.jpg`, they keep showing up fine on
+their own.
 
 ### Which folder - day or night?
 
@@ -94,28 +104,19 @@ wouldn't be reachable by visitors anyway - it goes in `assets/gallery/` instead.
 ### If a place's gallery folder doesn't exist yet
 
 This should only come up for a brand-new place added to the site after this system was set up (see
-Part 2). If browsing to `assets/gallery/<area>/` doesn't show that place's folder, you can create it
-in the same upload step: after clicking **Upload files**, click on the greyed-out filename shown in
-the upload box and type the folder path in front of it, for example:
-
-```
-giardino/20loungearea/my-photo.jpg
-```
-
-GitHub creates the `20loungearea` folder automatically the moment you commit - there's no separate
-"create a folder" button needed.
+Part 2). If `assets/gallery/<area>/` doesn't have that place's folder yet, just create one with the
+place's id as its name (for example `giardino/20loungearea/`) and put `1.jpg` inside - no separate
+setup, and nothing else on the site needs to know about it.
 
 ### If something doesn't work
 
-- **Photo still isn't showing after a couple of minutes**: on the repository's GitHub page, click
-  the **Actions** tab near the top. Look for the most recent run named "Rebuild gallery manifests".
-  A green check means it finished - if the photo still isn't showing, double-check you uploaded to
-  the right place's folder. A red X means it failed (pass this to your developer). Still spinning
-  means it just needs a bit more time.
-- **Uploaded to the wrong place or the wrong folder (day/night)**: delete it from the wrong spot
-  ("Removing a photo" above) and upload it again to the right one.
+- **Photo isn't showing on the site**: almost always the filename. Open the folder and check it's a
+  plain number (`5.jpg`, not `IMG_5.jpg` or `Tower photo 5.jpg`), and that the number isn't higher
+  than 50 (the current per-gallery limit - ask your developer to raise it if you ever need more).
+- **Placed it in the wrong place or the wrong folder (day/night)**: delete it from the wrong spot
+  ("Removing a photo" above) and add it again, renamed, to the right one.
 - **Photo appears sideways or upside down on the site**: rotate the photo file itself before
-  uploading - the site shows it exactly as it was uploaded.
+  adding it - the site shows it exactly as it was uploaded.
 
 ---
 
@@ -447,8 +448,7 @@ connected it to. As with day places, remember to bump `?v=` in `index.html` befo
 
 | Where | What you do there |
 |---|---|
-| `assets/gallery/<area>/<place-id>/`, `assets/gallery-night/<area>/<place-id>/` | Already exist for every place that has one. Drop photos in (any filename) on GitHub and commit - the Action writes `manifest.json`, nothing else to do. See Part 1. |
-| `.github/workflows/gallery-manifests.yml`, `tools/build_gallery_manifests.py` | Run automatically on push; don't edit unless the gallery mechanism itself needs to change - see Part 1. |
+| `assets/gallery/<area>/<place-id>/`, `assets/gallery-night/<area>/<place-id>/` | Already exist for every place that has one. Rename the photo to the next number (`1.jpg`, `2.jpg`, ...) and place it in the folder - nothing else to do. See Part 1. |
 | `images/` (create it yourself, project root) | Drop original full-size day panoramas here. Never uploaded/deployed. Safe to delete a photo once its tiles are built. |
 | `images-night/` (create it yourself, project root) | Same, for night panoramas - named directly after the scene id (no camera-name step). |
 | `js/scenes.js` | Add the chapter (if new), add the scene entry, set `view` / `links`, add the `night` field for a night version. This is the only file you *must* edit for new content - galleries never touch it. |
@@ -471,8 +471,9 @@ build script compute it the same way from `js/scenes.js`, so they can't drift ap
 - [ ] A link added *from* this place to a neighbour, and *from* that neighbour back to this place
 - [ ] `pending: true` removed
 - [ ] Hard refresh (Ctrl+F5) to check it; `?v=` bumped in `index.html` before deploying
-- [ ] (optional) Gallery photos uploaded on GitHub into `assets/gallery/<area>/<id>/` (create the
-      folder by typing its path into the first upload's filename - see Part 1) - no `scenes.js` edit needed
+- [ ] (optional) Gallery photos renamed `1.jpg`, `2.jpg`, ... and placed into
+      `assets/gallery/<area>/<id>/` (create the folder if it doesn't exist yet - see Part 1) - no
+      `scenes.js` edit needed
 - [ ] (optional) Night version added: photo confirmed to be the same spot, `images-night/<id>.jpg`,
       `python tools/build_tiles.py --night`, `night.positions` / `night.view` set with `?edit=1` in
       night mode (see Part 3)
@@ -490,11 +491,10 @@ build script compute it the same way from `js/scenes.js`, so they can't drift ap
   see Part 3b.
 - **Its hotspot leads nowhere, or is missing**: check the `to` value in the neighbouring place's
   `links` array matches this place's `id` exactly.
-- **The Gallery button doesn't appear for a gallery**: check the repo's Actions tab - the
-  `gallery-manifests` workflow either hasn't run yet (give it under a minute after the commit) or
-  failed; failing that, the folder path doesn't exactly match the `<area>/<place-id>` convention
-  (compare it letter-for-letter, including day vs. night), or the file's extension isn't one
-  `IMAGE_EXTS` in `tools/build_gallery_manifests.py` recognises. See also Part 1's own
+- **The Gallery button doesn't appear for a gallery**: the photo isn't named as a plain number
+  (`1.jpg`, `2.jpg`, ...), the number is above 50 (`GALLERY_MAX` in `js/app.js` - raise it if a
+  gallery ever needs more), or the folder path doesn't exactly match the `<area>/<place-id>`
+  convention (compare it letter-for-letter, including day vs. night). See also Part 1's own
   troubleshooting notes for the non-technical version of this.
 - **Tiles built into the wrong area folder**: the `chapter` value on that scene doesn't say what you
   think it does - double check it against the `chapters` array, then re-run

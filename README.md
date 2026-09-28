@@ -35,9 +35,7 @@ then open http://localhost:8000 (or `http://localhost:8000/#hall-2` to open a pl
 | `css/style.css` | All styling. Colours and fonts are variables at the top | sometimes |
 | `assets/tiles/<area>/`, `assets/tiles-night/<area>/` | The day / night panoramas, cut into small tiles (one folder per place, grouped by area - see below) | generated |
 | `assets/thumbs/<area>/`, `assets/thumbs-night/<area>/` | Small day / night preview picture per place (menu list and hotspot cards), grouped by area | generated |
-| `assets/gallery/<area>/<place-id>/`, `assets/gallery-night/<area>/<place-id>/` | Extra day / night photos per place, any filename, plus an auto-generated `manifest.json` | **yes** (photos only - never edit `manifest.json` by hand) |
-| `.github/workflows/gallery-manifests.yml` | Rebuilds every gallery `manifest.json` automatically on push - see "Photo galleries" | no |
-| `tools/build_gallery_manifests.py` | The scan the Action runs; safe to run locally too (`python tools/build_gallery_manifests.py`) | no |
+| `assets/gallery/<area>/<place-id>/`, `assets/gallery-night/<area>/<place-id>/` | Extra day / night photos per place (`1.jpg`, `2.jpg` ...) | **yes** |
 | `assets/` | Logo, emblem, browser-tab icon | when the logo changes |
 | `assets/fonts/` | Bodoni Moda, Instrument Sans, IBM Plex Mono (self-hosted) | no |
 | `vendor/marzipano.js` | The viewer library, unmodified | no |
@@ -146,32 +144,34 @@ assets/gallery-night/<area>/<place-id>/    <- night
 
 `<area>` is the same chapter-derived folder every other asset for that place already uses. **Every one of these
 folders already exists** (created ahead of time for every place in the tour, day and night), so adding a gallery to
-a place that has none is just: open its folder, drop a photo in, commit. No folder to create, no path to type.
+a place that has none is just: open its folder, drop a photo in. No folder to create, no path to type.
 
-The site doesn't scan the folder itself (a static host can't list a directory's contents) - each folder has a small
-`manifest.json` sitting next to the photos, which is what the site actually reads: `["IMG_4521.jpg", "sunset.jpg"]`.
-Writing that file is not a manual step: **`.github/workflows/gallery-manifests.yml`** runs automatically on every
-push that touches `assets/gallery*/`, rescans every folder, and commits the updated `manifest.json` files back. So
-the real workflow is just:
+The site doesn't scan the folder itself - a static host can't list a directory's contents, and there's no build step
+or CI job doing it on its behalf either, on purpose: **this has to keep working no matter how or where the site ends
+up deployed**, not only if it happens to stay on GitHub with Actions enabled. So instead, the site just checks for
+numbered files directly:
 
-1. Add or delete photo(s) in the right `<area>/<place-id>/` folder (any filename, any image extension).
-2. Commit / push.
-3. Within well under a minute the Action's commit lands and the manifest is up to date; refresh the site.
+```
+assets/gallery/<area>/<place-id>/1.jpg, 2.jpg, 3.jpg ...          <- day
+assets/gallery-night/<area>/<place-id>/1.jpg, 2.jpg, 3.jpg ...    <- night
+```
 
-Nothing about `scenes.js`, counts, or filenames is ever touched. To run the same scan locally (useful for testing
-before pushing): `python tools/build_gallery_manifests.py` - it rewrites every `manifest.json` under both
-`assets/gallery/` and `assets/gallery-night/` to match what's actually on disk, and is safe to run any time.
+The workflow is: **rename the photo to the next number, drop it in the right folder.** Nothing else - no
+`scenes.js` edit, no count to update, no commit-and-wait. It shows up the moment the file is there.
 
 A few things that follow from how this works:
 
+- **Numbers don't need to start at 1 or be consecutive.** `2.jpg`, `5.jpg`, `8.jpg` all show up fine even without a
+  `1.jpg` - every number from 1 to `GALLERY_MAX` is checked individually and whatever exists is shown, gaps and all.
+  Deleting one photo out of the middle later never hides the ones after it.
+- **50 is the current ceiling** per gallery (`GALLERY_MAX` in `js/app.js`) - raise that one constant if a place ever
+  needs more than 50 photos.
 - **Day and night galleries are completely independent folders**, and neither is a fallback for the other: in night
   mode the Gallery button only ever reflects `assets/gallery-night/...`, in day mode only `assets/gallery/...`. A
   place can have a day gallery, a night gallery, both, or neither.
 - **A place with no night panorama at all** (no `night` field in `scenes.js`) has no `gallery-night` folder either -
   it was never pre-created, since a visitor can never reach that place while in night mode.
 - Landscape and portrait both work, nothing gets cropped.
-- Recognised extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif` (see `IMAGE_EXTS` in
-  `tools/build_gallery_manifests.py` to add more).
 
 **Sorting raw photos into day/night**: there is no shortcut - open each photo and judge it by the same cue as the
 panoramas (daylight sky and no string lights on = day; dark sky, lit string lights/candles, or visible party lighting
@@ -285,9 +285,7 @@ index.html   css/   js/   vendor/   assets/  (fonts, tiles, tiles-night, thumbs,
 ```
 
 (almost all of it `assets/tiles/` and `assets/tiles-night/`). Do **not** upload `images/`, `images-night/`,
-`images-night-raw/`, `tools/`, `.github/` or the client brief - `.github/workflows/gallery-manifests.yml` only runs
-inside GitHub itself (on push) and plays no part on the deployed host; it needs the repo to exist on GitHub with
-Actions enabled, regardless of which host the *site* is served from.
+`images-night-raw/`, `tools/` or the client brief.
 
 - **Vercel**: import the repository, framework "Other", no build command, output directory = root.
 - **GitHub Pages**: Settings -> Pages -> branch `main`, folder `/ (root)`. All paths are relative and share links use `#`, so
@@ -317,8 +315,7 @@ Actions enabled, regardless of which host the *site* is served from.
 - **The transition feels too fast / slow or the trail too strong**: `PUSH`, `MAXS` and `MAXT` in the `goTo` function of `js/app.js`.
 - **A night hotspot is missing or points to the wrong place**: night hotspots come only from that scene's `night.positions`,
   never from `links` - check `night.positions` has an entry for that destination, not the day `links` array.
-- **A gallery photo doesn't appear on the site even though the file is in the right folder**: its `manifest.json`
-  hasn't caught up yet - check the Action ran (repo's Actions tab on GitHub) and actually committed an updated
-  `manifest.json` for that folder; if you're testing locally without pushing, run
-  `python tools/build_gallery_manifests.py` yourself first. Also check the file's extension is one `IMAGE_EXTS` in
-  `tools/build_gallery_manifests.py` recognises (`.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`).
+- **A gallery photo doesn't appear on the site even though the file is in the right folder**: it isn't named as a
+  plain number (`1.jpg`, not `photo1.jpg` or `01.JPG` - the extension must be lowercase `.jpg` too), or the number is
+  above 50 (`GALLERY_MAX` in `js/app.js`), or it's in the wrong folder (compare `<area>/<place-id>` and day vs. night
+  letter-for-letter).
