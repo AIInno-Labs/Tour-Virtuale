@@ -57,7 +57,7 @@ def load_scene_folders():
     so it is read from there instead of being duplicated here)."""
     src = open(SCENES_JS, encoding="utf-8").read()
     chapter_folder = {}
-    for cid, name_it in re.findall(r'\{ id: "([a-z]+)", name: "[^"]*", nameIt: "([^"]*)" \}', src):
+    for cid, name_it in re.findall(r'\{ id: "([a-z]+)", name: "[^"]*", nameIt: "([^"]*)"', src):
         chapter_folder[cid] = slugify(name_it)
     scene_folder = {}
     for sid, cid in re.findall(r'\{ id: "([a-zA-Z0-9]+)"(?:, homeOnly: true)?, chapter: "([a-z]+)"', src):

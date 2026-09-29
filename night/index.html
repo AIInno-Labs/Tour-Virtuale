@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cala dei Balcani</title>
+<script>
+  // Same secret route as /night.html, one level down so plain "/night" (or "/night/") also reaches
+  // it on hosts that resolve a folder to its index.html automatically. See NIGHT_ROUTE in js/app.js.
+  location.replace('../index.html?tour=night' + location.hash);
+</script>
+</head>
+<body></body>
+</html>

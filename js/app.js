@@ -6,6 +6,12 @@
   var rad = Marzipano.util.degToRad;
   var deg = function (r) { return r * 180 / Math.PI; };
   var EDIT = /[?&]edit\b/.test(location.search);
+  // Secret route for the developer/client to preview night mode, reached via /night (see
+  // night/index.html and night.html, which both redirect here with this query string). Deliberately
+  // looks identical to the normal day-only welcome screen - still one generic "Start the tour"
+  // button, still no day/night toggle anywhere - it just quietly starts the night tour instead of
+  // the day one. See the #introStartDay click handler further down.
+  var NIGHT_ROUTE = /[?&]tour=night\b/.test(location.search);
   var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // A failed tile request (dropped connection, a request queue getting saturated right after a
@@ -62,7 +68,10 @@
   }
 
   /* ---------- data ---------- */
-  var all = T.scenes.filter(function (s) { return !s.pending; });
+  // In edit mode, pending scenes count too - see INSTRUCTIONS.md Part 2 step 6, "open it directly by
+  // its id": that only works if a pending place is actually reachable (byId, Previous/Next, Areas)
+  // while it's being set up. Regular visitors (EDIT false) never see pending places, same as before.
+  var all = T.scenes.filter(function (s) { return !s.pending || EDIT; });
   // A homeOnly scene is just the picture behind the welcome screen. A nightOnly scene exists only at
   // night (no day photo) - see the night-mode data section further down. Neither belongs in the day
   // Areas list or Previous / Next.
@@ -365,6 +374,14 @@
     var nightView = mode === 'night' && target.data.night && target.data.night.view;
     var v = opts.view || nightView || target.data.view || { yaw: 0, pitch: 0 };
     var from = current && cache[cacheKey(current)];
+    // Edit-mode only: opening a place with ?yaw=&pitch= in the URL (e.g. index.html?edit=1&yaw=-150&pitch=30#id)
+    // starts it looking that direction instead of its scenes.js view - handy for scouting a panorama
+    // for a good opening view or a hotspot's rough direction before settling on exact numbers with the
+    // crosshair. Only takes effect on the very first scene of the session (!from), same as a page load normally would.
+    if (EDIT && !from) {
+      var qy = /[?&]yaw=(-?[\d.]+)/.exec(location.search), qp = /[?&]pitch=(-?[\d.]+)/.exec(location.search);
+      if (qy || qp) v = { yaw: qy ? +qy[1] : v.yaw, pitch: qp ? +qp[1] : v.pitch };
+    }
     if (from === target) return;
     if (from && !opts.back && !opts.instant && !skipVisited) { visited.push(current); if (visited.length > 60) visited.shift(); }
     skipVisited = false;
@@ -765,14 +782,18 @@
   }
 
   // The gallery opens as a grid of equal-width photos. Clicking a photo opens it large, Close goes back to the grid.
+  // Cached by src (not just per-folder) so reopening a gallery already seen this session is instant -
+  // otherwise every open re-decodes every full-size photo from scratch just to read its aspect ratio.
+  var measureCache = {};
   function measure(src) {
-    return new Promise(function (res) {
+    if (measureCache[src]) return measureCache[src];
+    return (measureCache[src] = new Promise(function (res) {
       var im = new Image();
       im.onload = function () { res({ src: src, ar: im.naturalWidth / im.naturalHeight }); };
-      im.onerror = function () { res(null); };
+      im.onerror = function () { delete measureCache[src]; res(null); };
       im.decoding = 'async';
       im.src = src;
-    });
+    }));
   }
 
   // Every photo gets the same width. The number of columns adapts to the screen, so the width adapts too,
@@ -820,15 +841,33 @@
   var layoutTimer = 0;
   window.addEventListener('resize', function () { clearTimeout(layoutTimer); layoutTimer = setTimeout(layoutGrid, 120); });
 
+  // Opens the lightbox shell (backdrop + title + a spinner) the moment the folder's photo list is
+  // known, instead of waiting for every full-size photo to load first - on a gallery with several
+  // multi-MB photos that first load could take seconds, during which nothing appeared at all.
   function openGallery(d) {
     var folder = galleryFolder(d);
     loadGallery(folder).then(function (list) {
       if (!list.length) { toast(t('noPhotos', { folder: folder })); return; }
-      return Promise.all(list.map(measure)).then(function (items) {
+      lb.d = d;
+      $('#lbTitle').textContent = mode === 'night' && d.night ? nightNm(d) : nm(d);
+      $('#lbCount').textContent = '';
+      $('#lightbox').classList.remove('viewing');
+      $('#lbStage').hidden = true;
+      $('#lbStrip').hidden = true;
+      var grid = $('#galGrid');
+      grid.hidden = false;
+      grid.classList.add('gal-loading');
+      grid.textContent = '';
+      var spin = document.createElement('div');
+      spin.className = 'gal-spinner';
+      grid.appendChild(spin);
+      $('#lightbox').hidden = false;
+      Promise.all(list.map(measure)).then(function (items) {
+        if (lb.d !== d) return; // a different gallery was opened (or closed) while this one was still loading
+        grid.classList.remove('gal-loading');
         items = items.filter(Boolean);
-        if (!items.length) return;
-        lb.items = items; lb.list = items.map(function (x) { return x.src; }); lb.i = 0; lb.d = d;
-        $('#lbTitle').textContent = mode === 'night' && d.night ? nightNm(d) : nm(d);
+        if (!items.length) { $('#lightbox').hidden = true; toast(t('noPhotos', { folder: folder })); return; }
+        lb.items = items; lb.list = items.map(function (x) { return x.src; }); lb.i = 0;
         var strip = $('#lbStrip');
         strip.textContent = '';
         items.forEach(function (it, i) {
@@ -842,7 +881,6 @@
           b.addEventListener('click', function () { showPhoto(i); });
           strip.appendChild(b);
         });
-        $('#lightbox').hidden = false;
         showGrid();
       });
     });
@@ -997,7 +1035,10 @@
       }
     });
   }
-  $('#introStartDay').addEventListener('click', function () { startTourWithMode('day', this); });
+  // On the /night route this button starts the night tour, so its icon should read as moon, not sun -
+  // text stays the plain "Start the tour" label either way (see NIGHT_ROUTE above).
+  if (NIGHT_ROUTE) $('#introStartDay .disc').classList.replace('disc-day', 'disc-night');
+  $('#introStartDay').addEventListener('click', function () { startTourWithMode(NIGHT_ROUTE ? 'night' : 'day', this); });
   $('#introStartNight').addEventListener('click', function () { startTourWithMode('night', this); });
 
   /* ---------- contact, menu, share, welcome text ---------- */

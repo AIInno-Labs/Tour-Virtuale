@@ -347,6 +347,9 @@ body.intro-on #topLeft, body.intro-on #btnMap, body.intro-on #btnPhotos, body.in
 
 .bento { --gap: 12px; --col: 320px; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 6px 24px calc(28px + var(--safe-b)); -webkit-overflow-scrolling: touch; }
 .bento[hidden] { display: none; }
+.bento.gal-loading { display: flex; align-items: center; justify-content: center; }
+.gal-spinner { width: 40px; height: 40px; border-radius: 50%; border: 3px solid rgba(243, 246, 244, .2); border-top-color: var(--lagoon); animation: galSpin .8s linear infinite; }
+@keyframes galSpin { to { transform: rotate(360deg); } }
 .bcols { display: flex; align-items: flex-start; gap: var(--gap); }
 .bcol { display: flex; flex-direction: column; gap: var(--gap); flex: none; }
 .tile { position: relative; flex: none; overflow: hidden; border-radius: 18px; background: var(--tide); box-shadow: 0 14px 34px rgba(0, 0, 0, .35); cursor: zoom-in;
@@ -482,16 +485,19 @@ body.intro-on #pan { visibility: hidden; }
 :root[data-mode="night"] #btnMode i { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z'/%3E%3C/svg%3E"); }
 @media (max-width: 700px) { #btnMode { display: none; } }
 
-/* The in-tour day/night toggle (top bar + Menu) is hidden site-wide on purpose: day/night is chosen
-   only on the welcome screen (see #introStartDay/#introStartNight). All of the toggle's own
-   markup, styling and JS logic above are left fully working - to bring it back, just delete this
-   one rule (and the "hidden" attribute on #btnMode / .menu-mode in index.html). */
+/* The in-tour day/night toggle (top bar + Menu) is hidden site-wide on purpose, even on the secret
+   /night route (see NIGHT_ROUTE in app.js) - day/night is chosen once, before the tour starts, and
+   never switched mid-visit. All of the toggle's own markup, styling and JS logic above are left
+   fully working - to bring it back, just delete this one rule (and the "hidden" attribute on
+   #btnMode / .menu-mode in index.html). */
 #btnMode, .menu-mode { display: none !important; }
 
-/* Night tour temporarily hidden on the welcome screen too, at the client's request (day-only preview
-   for now) - #introStartNight, its click handler, setMode('night'), the whole night tour/data model
-   etc. are all still fully working underneath. To bring it back: delete this rule and the "hidden"
-   attribute on #introStartNight in index.html - nothing else needs to change. */
+/* Night tour temporarily hidden as a second welcome-screen button, at the client's request (day-only
+   preview for now) - #introStartNight, its click handler, setMode('night'), the whole night tour/data
+   model etc. are all still fully working underneath, and the /night route (NIGHT_ROUTE in app.js)
+   reaches the night tour through the #introStartDay button instead, without showing this one. To
+   bring this button back too: delete this rule and the "hidden" attribute on #introStartNight in
+   index.html - nothing else needs to change. */
 #introStartNight { display: none !important; }
 
 /* loading progress: the whole 360 pill fills while a new place loads, then returns to normal */
