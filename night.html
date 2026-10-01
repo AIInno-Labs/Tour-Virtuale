@@ -4,11 +4,10 @@
 <meta charset="utf-8">
 <title>Cala dei Balcani</title>
 <script>
-  // Secret route to preview the night tour (see NIGHT_ROUTE in js/app.js) - starts the same welcome
-  // screen a regular visitor sees, but its one button quietly starts the night tour instead of the
-  // day one. Not linked from anywhere on the site - only reachable by typing this address directly.
-  // /night/ (night/index.html) is the same thing for hosts that resolve clean folder URLs.
-  location.replace('index.html?tour=night' + location.hash);
+  // This plain file only exists for hosts that don't resolve "/night" to night/index.html on their
+  // own - it just hands off to the real thing there, so the address bar ends up on /night/ instead
+  // of staying on /night.html. See NIGHT_ROUTE in js/app.js.
+  location.replace('night/' + location.hash);
 </script>
 </head>
 <body></body>

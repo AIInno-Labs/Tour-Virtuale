@@ -6,12 +6,21 @@
   var rad = Marzipano.util.degToRad;
   var deg = function (r) { return r * 180 / Math.PI; };
   var EDIT = /[?&]edit\b/.test(location.search);
-  // Secret route for the developer/client to preview night mode, reached via /night (see
-  // night/index.html and night.html, which both redirect here with this query string). Deliberately
-  // looks identical to the normal day-only welcome screen - still one generic "Start the tour"
-  // button, still no day/night toggle anywhere - it just quietly starts the night tour instead of
-  // the day one. See the #introStartDay click handler further down.
-  var NIGHT_ROUTE = /[?&]tour=night\b/.test(location.search);
+  // Secret route for the developer/client to preview night mode, reached via /night - night/index.html
+  // is a full copy of this page (own copy of the markup, same css/js/assets) so the address bar stays
+  // on /night instead of jumping to index.html; night.html (plain file, for hosts that don't resolve
+  // /night to a folder's index.html) redirects there. Deliberately looks identical to the normal
+  // day-only welcome screen - still one generic "Start the tour" button, still no day/night toggle
+  // anywhere - it just quietly starts the night tour instead of the day one. See the #introStartDay
+  // click handler further down. The query-string form still works too, in case anything ever links
+  // straight to index.html?tour=night.
+  var UNDER_NIGHT_FOLDER = /(^|\/)night\/(index\.html)?$/.test(location.pathname);
+  var NIGHT_ROUTE = UNDER_NIGHT_FOLDER || /[?&]tour=night\b/.test(location.search);
+  // night/index.html is a real copy of this page one folder below the site root (see NIGHT_ROUTE
+  // above), so every plain relative path this file builds by hand (tiles, thumbnails, gallery photos -
+  // anything not already written directly into that HTML file) needs an extra "../" from there to
+  // still reach the one shared assets/ folder at the root, instead of a nonexistent night/assets/.
+  var BASE = UNDER_NIGHT_FOLDER ? '../' : '';
   var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // A failed tile request (dropped connection, a request queue getting saturated right after a
@@ -23,14 +32,17 @@
   // about a second instead of up to ten.
   var TILE_RETRY_DELAY = 1200;
 
-  var TILES_DIR = 'assets/tiles/';
-  var TILES_DIR_NIGHT = 'assets/tiles-night/';
+  var TILES_DIR = BASE + 'assets/tiles/';
+  var TILES_DIR_NIGHT = BASE + 'assets/tiles-night/';
   // 'day' or 'night' - which set of tiles getScene() / thumbSrc() build from. A place only has
   // night tiles when its scenes.js entry says `night: true` (tileBase() falls back to day otherwise).
   // See setMode() further down for what happens when the visitor switches. Remembered across visits,
   // the same way the language choice is.
   var mode = 'day';
   try { if (localStorage.getItem('tour-mode') === 'night') mode = 'night'; } catch (e) {}
+  // The /night route always opens in night mode, regardless of what a previous day visit left in
+  // localStorage - that's the whole point of that route (see NIGHT_ROUTE above).
+  if (NIGHT_ROUTE) mode = 'night';
   var FACE_SIZE = 3072;
   var LEVELS = [
     { tileSize: 512, size: 512, fallbackOnly: true },
@@ -102,14 +114,14 @@
     return base + chapterById[d.chapter].folder + '/' + id;
   }
   function thumbSrc(scene) {
-    var base = (mode === 'night' && scene.night) ? 'assets/thumbs-night/' : 'assets/thumbs/';
+    var base = BASE + ((mode === 'night' && scene.night) ? 'assets/thumbs-night/' : 'assets/thumbs/');
     return base + chapterById[scene.chapter].folder + '/' + scene.id + '.jpg';
   }
   // A gallery folder is never declared in scenes.js - it lives at this one predictable path (same
   // day/night, per-area convention as tiles and thumbnails) or it doesn't exist at all. Whether a
   // place "has a gallery" is discovered purely by finding numbered photos there (see loadGallery).
   function galleryFolder(scene) {
-    var base = (mode === 'night' && scene.night) ? 'assets/gallery-night/' : 'assets/gallery/';
+    var base = BASE + ((mode === 'night' && scene.night) ? 'assets/gallery-night/' : 'assets/gallery/');
     return base + chapterById[scene.chapter].folder + '/' + scene.id;
   }
   scenes.forEach(function (s) {
@@ -985,7 +997,7 @@
     document.body.classList.add('intro-on');
     visited = [];
     closePanels();
-    goTo(T.home.scene, { instant: true, noHash: true, view: T.home.view });
+    goTo(T.home.scene, { instant: true, noHash: true, view: (mode === 'night' && T.home.nightView) || T.home.view });
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
   }
   function hideIntro() {
