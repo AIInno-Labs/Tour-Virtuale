@@ -290,6 +290,32 @@ body.intro-on #topLeft, body.intro-on #btnMap, body.intro-on #btnPhotos, body.in
 .intro-eyebrow::before, .intro-eyebrow::after { content: ""; width: 34px; height: 1px; background: currentColor; opacity: .55; }
 #introLead { margin: 0; max-width: 21em; font-family: var(--display); font-style: italic; font-weight: 400; font-size: clamp(19px, 2.3vw, 24px); line-height: 1.4; letter-spacing: .003em; color: var(--chalk); text-wrap: balance; }
 #introLead em { font-style: italic; color: var(--lagoon); }
+/* The /night route (see NIGHT_ROUTE in app.js): the client's idea of a visibly distinct night
+   theme, not just a different welcome photo. --lagoon (the site's one accent colour - hotspot
+   pins, focus rings, active states, kickers, the 360 pill, all of it) is a dusk-lantern gold here
+   instead of the day tour's teal, so the whole night experience re-themes from this one line -
+   every existing rule that reads var(--lagoon) picks it up automatically, nothing else to touch.
+   Chosen deliberately less saturated than the welcome text's own #ffc104 (see below): that brighter
+   gold is the one hero moment, this quieter one is the everyday UI accent underneath it. */
+:root.night-route { --lagoon: #e3b24d; }
+/* A few places bake the teal in as a literal rgba() instead of var(--lagoon) (needed for alpha
+   blending), so they need their own night-route line with the new gold's own RGB (227, 178, 77). */
+.night-route #areasBody, .night-route #menuList, .night-route #intro, .night-route #galGrid, .night-route #lbStrip {
+  scrollbar-color: rgba(227, 178, 77, .5) transparent; }
+.night-route .stop.current::before { box-shadow: 0 0 0 4px rgba(227, 178, 77, .22); }
+.night-route #pan::before { background: linear-gradient(90deg, rgba(227, 178, 77, .34), rgba(227, 178, 77, .7)); }
+.night-route .cta.big::before { background: linear-gradient(90deg, rgba(166, 128, 56, .65), var(--lagoon)); }
+.night-route .cta.big:hover { box-shadow: 0 18px 46px rgba(227, 178, 77, .28); }
+.night-route .cta.big.loading .lbl { color: var(--abyss); }
+.night-route .disc-night { border-color: rgba(227, 178, 77, .55); }
+/* .cta:hover (the base class) sets background directly, not via var(--lagoon) at the declaration
+   site in a way the cascade alone would re-theme - needs its own override, or the button still
+   flashes the old teal on hover before a click starts the fill. Scoped to this one button, not
+   every .cta site-wide (the Inquire card's "Call now" etc. should stay teal everywhere). */
+.night-route #introStartDay:hover { background: var(--lagoon); }
+/* The welcome screen's own eyebrow and highlighted words keep the brighter, separate #ffc104 -
+   this is the one spot that's intentionally NOT the quieter --lagoon gold above. */
+.night-route .intro-eyebrow, .night-route #introLead em { color: #ffc104; }
 .intro-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 32px; }
 .cta, .ghost { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .cta { height: 50px; padding: 0 30px; border-radius: 999px; font-size: 16px; font-weight: 600; background: var(--chalk); color: var(--abyss); transition: background .25s, transform .2s, box-shadow .25s; }

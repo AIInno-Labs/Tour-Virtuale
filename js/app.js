@@ -16,6 +16,9 @@
   // straight to index.html?tour=night.
   var UNDER_NIGHT_FOLDER = /(^|\/)night\/(index\.html)?$/.test(location.pathname);
   var NIGHT_ROUTE = UNDER_NIGHT_FOLDER || /[?&]tour=night\b/.test(location.search);
+  // Styling hook only (see the .night-route rule in css/style.css) - gives the welcome screen's
+  // eyebrow and highlighted words their own yellow on this route, instead of the day screen's teal.
+  if (NIGHT_ROUTE) document.documentElement.classList.add('night-route');
   // night/index.html is a real copy of this page one folder below the site root (see NIGHT_ROUTE
   // above), so every plain relative path this file builds by hand (tiles, thumbnails, gallery photos -
   // anything not already written directly into that HTML file) needs an extra "../" from there to
@@ -1153,7 +1156,7 @@
   function fillIntro() {
     var lead = $('#introLead');
     lead.textContent = '';
-    pick(T.home, 'lead').split('*').forEach(function (part, i) {
+    pick(T.home, NIGHT_ROUTE ? 'nightLead' : 'lead').split('*').forEach(function (part, i) {
       if (!part) return;
       if (i % 2) { var em = document.createElement('em'); em.textContent = part; lead.appendChild(em); }
       else lead.appendChild(document.createTextNode(part));
