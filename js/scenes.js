@@ -60,7 +60,7 @@ window.TOUR = {
   scenes: [
     // The picture behind the welcome screen only (homeOnly keeps it out of the Areas list and Previous / Next).
     { id: "panohome", homeOnly: true, chapter: "arrival", night: { positions: {}, view: { yaw: -151, pitch: -2 } }, name: "Home", nameIt: "Home", nameFr: "Accueil", nameEs: "Inicio", nameDe: "Startseite", view: { yaw: -35, pitch: 4 }, links: [] },
-    { id: "01parcheggio", chapter: "arrival", night: { positions: { "02parcheggio": { yaw: -1, pitch: -1 } }, view: { yaw: 12, pitch: -8 } }, name: "Parking 1", nameIt: "Parcheggio 1", nameFr: "Parking 1", nameEs: "Aparcamiento 1", nameDe: "Parkplatz 1",
+    { id: "01parcheggio", chapter: "arrival", night: { positions: { "02parcheggio": { yaw: -1, pitch: -1 }, "12torredrone": { yaw: 37, pitch: -14 } }, view: { yaw: 12, pitch: -8 } }, name: "Parking 1", nameIt: "Parcheggio 1", nameFr: "Parking 1", nameEs: "Aparcamiento 1", nameDe: "Parkplatz 1",
       view: { yaw: 12, pitch: -8 },
       links: [{ to: "02parcheggio", yaw: 4, pitch: 5 }, { to: "12torredrone", yaw: 40, pitch: -13 }] },
     { id: "02parcheggio", chapter: "arrival", night: { positions: { "03ingressotorre": { yaw: -31, pitch: 5 }, "01parcheggio": { yaw: 124, pitch: 0 } }, view: { yaw: 15, pitch: -6 } }, name: "Parking 2", nameIt: "Parcheggio 2", nameFr: "Parking 2", nameEs: "Aparcamiento 2", nameDe: "Parkplatz 2",
