@@ -40,9 +40,16 @@
   // the same way the language choice is.
   var mode = 'day';
   try { if (localStorage.getItem('tour-mode') === 'night') mode = 'night'; } catch (e) {}
-  // The /night route always opens in night mode, regardless of what a previous day visit left in
-  // localStorage - that's the whole point of that route (see NIGHT_ROUTE above).
+  // The /night route always opens in night mode, regardless of what a previous visit left in
+  // localStorage - that's the whole point of that route (see NIGHT_ROUTE above). The reverse also
+  // has to hold: today the regular site has no way at all to reach night mode on its own (the
+  // toggle is hidden site-wide - see the kill-switches in css/style.css), so a stored 'night' can
+  // only ever be left over from an earlier /night visit, never a real visitor's own choice - correct
+  // it back to day rather than let that leak into the regular site. Simplify this to just
+  // `if (NIGHT_ROUTE) mode = 'night';` once the toggle is restored for real visitors, when a stored
+  // 'night' becomes a genuine preference worth keeping again.
   if (NIGHT_ROUTE) mode = 'night';
+  else if (mode === 'night') mode = 'day';
   var FACE_SIZE = 3072;
   var LEVELS = [
     { tileSize: 512, size: 512, fallbackOnly: true },
@@ -681,7 +688,9 @@
   function setMode(m) {
     var prevMode = mode;
     mode = m;
-    try { localStorage.setItem('tour-mode', m); } catch (e) {}
+    // Not persisted on the /night route - that mode is forced by the route itself every time (see
+    // NIGHT_ROUTE above), not a visitor's own choice, so it shouldn't be remembered as one.
+    if (!NIGHT_ROUTE) { try { localStorage.setItem('tour-mode', m); } catch (e) {} }
     document.documentElement.setAttribute('data-mode', m);
     Array.prototype.forEach.call(document.querySelectorAll('#mDay, #mNight'), function (b) {
       b.setAttribute('aria-pressed', String(b.id === 'mDay' ? m === 'day' : m === 'night'));
