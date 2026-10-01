@@ -400,9 +400,16 @@ way, on each neighbour's own `night.positions`. Then pick one of those positions
 ```
 
 **Step 5 - Rename it for night, only if needed.** If the place should be called something different
-at night (common when a night-only photo gets inserted before it and everything after it shifts by
-one - see `10torre2`, night name "Tower 3", for a real example), add `name` / `nameIt` inside the
-`night` object too. Otherwise the day name is reused automatically - do not repeat it for no reason.
+at night (common when the night route visits places in a different order than the day one - see
+`08pineta2`, "Pine Grove 2" by day but "Pine Grove 1" at night, for a real example), add `name` /
+`nameIt` inside the `night` object too. Otherwise the day name is reused automatically - do not
+repeat it for no reason.
+
+If you're inserting or removing a `nightOnly` place from the *middle* of a numbered sequence like
+"Tower 1", "Tower 2", "Tower 3" - where the numbers only mean "position in this sequence", not
+anything in the `id` - renumber every place after the gap by hand. The site has no idea these names
+are meant to stay consecutive: remove "Tower 2" and "Tower 3"/"Tower 4" just sit there with a gap in
+front of them until you rename them down yourself.
 
 **Step 6 - Give it a night gallery folder, if you want one.** A `gallery-night` folder for this place
 is only created once it has a `night` field, so after this step is done, create
@@ -416,11 +423,11 @@ string lights on). It is a normal scene entry, marked `nightOnly: true`, with on
 day `view` of its own:
 
 ```js
-{ id: "torre2b", chapter: "tower", nightOnly: true,
-  night: { positions: { "10torre2": { yaw: 69.9, pitch: 9.8 }, "09torre1": { yaw: 165.9, pitch: 10.1 } },
-           view: { yaw: 69.9, pitch: 9.8 } },
-  name: "Tower 2", nameIt: "Torre 2",
-  links: [{ to: "10torre2", yaw: 69.9, pitch: 9.8 }, { to: "09torre1", yaw: 165.9, pitch: 10.1 }] },
+{ id: "tratturo3b", chapter: "trail", nightOnly: true,
+  night: { positions: { "40tratturo2": { yaw: -7.7, pitch: 5.3 }, "41tratturo3": { yaw: -176.8, pitch: -11.2 } },
+           view: { yaw: -7.7, pitch: 5.3 } },
+  name: "Drover's Trail 3", nameIt: "Tratturo 3",
+  links: [{ to: "40tratturo2", yaw: -7.7, pitch: 5.3 }, { to: "41tratturo3", yaw: -176.8, pitch: -11.2 }] },
 ```
 
 The steps are the same as 3a (photo in `images-night/<id>.jpg`, `python tools/build_tiles.py --night`,
@@ -489,6 +496,9 @@ build script compute it the same way from `js/scenes.js`, so they can't drift ap
 - **A night place has no hotspots even though Areas/Previous-Next look right**: its `night.positions`
   is empty, or (for a `nightOnly` place) `night.positions` was set but not also copied into `links` -
   see Part 3b.
+- **Night-mode numbered names ("Tower 2", "Tower 3"...) look like they skip a number**: a `nightOnly`
+  place was added or removed from the middle of that sequence without renumbering the ones after it -
+  see the note at the end of Part 3a, Step 5.
 - **Its hotspot leads nowhere, or is missing**: check the `to` value in the neighbouring place's
   `links` array matches this place's `id` exactly.
 - **The Gallery button doesn't appear for a gallery**: the photo isn't named as a plain number

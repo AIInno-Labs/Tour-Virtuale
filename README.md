@@ -5,10 +5,10 @@ A browser-based 360 tour built with plain **HTML + CSS + JavaScript** and the fr
 There is no server, database, build step or third-party platform: upload the folder to any static host.
 Fonts are bundled too, so nothing is loaded from outside.
 
-- 42 day places (outdoor areas and interiors) linked by walk-to hotspots, in **five languages: Italian (default),
+- 45 day places (outdoor areas and interiors) linked by walk-to hotspots, in **five languages: Italian (default),
   English, French, Spanish and German**
-- A separate **night view** with its own 38 places, own names, own area list and its own Previous / Next order - see
-  "Night view" below
+- A separate **night view** with its own 40 places, own names, own area list and its own Previous / Next order - see
+  "Night view" below. Fully built, but not linked from the public site right now - see "Day / night" below
 - Works on desktop, tablet and phone (touch drag, pinch, back gesture)
 - Photo galleries per place, area list, menu, contact card, readable share links
 
@@ -29,8 +29,10 @@ then open http://localhost:8000 (or `http://localhost:8000/#hall-2` to open a pl
 | Path | What it is | Edit? |
 |---|---|---|
 | `index.html` | The page (top bar, panels, welcome screen, gallery markup) | rarely |
+| `night/index.html` | A full copy of `index.html` so the hidden night-preview route can keep `/night` in the address bar - see "The `/night` preview route". Any markup change to `index.html` needs the same change made here too | **with index.html** |
+| `night.html` | One-line redirect to `night/`, for hosts that don't resolve a bare `/night` to that folder on their own | no |
 | `js/scenes.js` | **All the tour content**: places, links between them, chapters, home screen, contact details | **yes** |
-| `js/i18n.js` | Interface texts in English and Italian | sometimes |
+| `js/i18n.js` | Interface texts, all five languages | sometimes |
 | `js/app.js` | The viewer logic (navigation, transition, menu, gallery, language, URLs) | rarely |
 | `css/style.css` | All styling. Colours and fonts are variables at the top | sometimes |
 | `assets/tiles/<area>/`, `assets/tiles-night/<area>/` | The day / night panoramas, cut into small tiles (one folder per place, grouped by area - see below) | generated |
@@ -45,8 +47,9 @@ The original 12000 px panoramas (`images/`, about 2 GB) are **not** part of the 
 
 ## 3. How the tour behaves (for visitors)
 
-- **Welcome screen**: logo, one line of text and a *Start the tour* button. The background is the aerial panorama, and it
-  is always the same photo whether the visitor is in day or night mode.
+- **Welcome screen**: logo, one line of text and a *Start the tour* button, background the day aerial panorama. (The
+  hidden night-preview route has its own version of this screen with its own, night, background - see "Day / night"
+  below.)
 - **Hotspots**: a flat, round direction pin standing on the spot you can walk to, with an arrow inside pointing the way -
   no bobbing/idle animation, no hover-scale. Hover one on desktop to see a thumbnail card with the place name; on touch
   screens a name tag sits above the pin.
@@ -60,14 +63,16 @@ The original 12000 px panoramas (`images/`, about 2 GB) are **not** part of the 
   a gallery in whichever mode (day/night) is currently selected.
 - **Language**: the round code button (always visible, e.g. "IT") opens a dropdown of all five languages; picking one
   switches the whole interface and every place name, and the choice is remembered across visits.
-- **Day / night**: chosen once, on the welcome screen, and fixed for the rest of the visit - there is no in-tour
-  toggle. The welcome screen has two buttons, *Start by day* and *Start by night*, each opening a completely separate
-  tour: its own places, names, area list, Previous / Next order, and even its own photo galleries (a place's Gallery
-  button shows its day photos on the day tour, its night photos on the night tour - never both). Whichever one is
-  picked is remembered across visits (like the language), so returning visitors land back in the same mode; going back
-  Home and picking the other button is the only way to switch. *Start the tour* in the Menu (while already touring)
-  reopens the first place of whichever tour is currently active, without prompting again. See "Night view" below for
-  how the data is put together.
+- **Day / night**: the night tour is a complete, independent tour underneath (own places, names, area list,
+  Previous / Next order, even its own photo galleries), built the same way as the day one - see "Night view" below
+  for how that data is put together. **Right now the public site only ever shows the day tour**, at the client's
+  request: the welcome screen has a single, plain *Start the tour* button, and the in-tour day/night toggle (top bar
+  and Menu) is hidden everywhere. None of that is deleted - it's turned off with CSS kill-switches in `css/style.css`
+  (`#btnMode, .menu-mode { display: none !important; }` and `#introStartNight { display: none !important; }`), each
+  with a comment saying exactly what to delete to bring it back, the moment the client wants the night tour public.
+  Until then, the only way in is the **hidden `/night` route**, for the developer and client to keep reviewing it -
+  see "The `/night` preview route" below. Whichever mode a visit actually starts in is remembered across visits (like
+  the language), so returning to the same device lands back in the same one.
 - **Share links** use the place name and follow the language: `#oak-tree-2` (English) or `#quercia-2` (Italian).
   Old links with the file code (`#18quercia2`) still work. The browser back button / back gesture walks back through places.
 
@@ -229,22 +234,24 @@ extra field, `night`, so the two can never leak into each other:
 |---|---|
 | `positions` | The **only** source of hotspots shown in night mode: `{ "<destination id>": { yaw, pitch } }`. Independent of `links` - a night place can connect to different neighbours than its day version, or to a `nightOnly` place that has no day version at all. |
 | `view` | Opening direction in night mode. Always set it to face one of the place's own `positions` (a visitor should never open a night scene staring at the ground or a wall). |
-| `name` / `nameIt` | Optional: only needed when the place should be called something different at night than during the day (e.g. `10torre2` is "Tower 2" by day but "Tower 3" at night, because a night-only photo gets inserted before it). Leave them out and the day name is reused. |
+| `name` / `nameIt` | Optional: only needed when the place should be called something different at night than during the day (e.g. `08pineta2` is "Pine Grove 2" by day but "Pine Grove 1" at night, because the night route through the pine grove visits it first). Leave them out and the day name is reused. |
 
 A place with no `night` field does not exist at night at all - it is skipped by every night-mode list (Areas, Previous /
-Next, hotspots). The welcome-screen background (`panohome`) is deliberately given no `night` field, which is what
-guarantees it looks identical in both modes.
+Next, hotspots). The welcome-screen background (`panohome`) is the one exception that *does* use `night.view` with an
+empty `night.positions`: it has no hotspots of its own in either mode (it's `homeOnly`, never walked to), but it does
+need its own night tiles and opening direction, so `showIntro()` picks `T.home.nightView` over `T.home.view` when the
+`/night` route is active - see "The `/night` preview route" below.
 
 **A place that only exists at night** (a photo with no day equivalent) is a normal scene entry with `nightOnly: true`
 and no day `view`/`links` of its own - only `night.positions`/`night.view`, mirrored into `links` so both modes read
 consistent data:
 
 ```js
-{ id: "torre2b", chapter: "tower", nightOnly: true,
-  night: { positions: { "10torre2": { yaw: 69.9, pitch: 9.8 }, "09torre1": { yaw: 165.9, pitch: 10.1 } },
-           view: { yaw: 69.9, pitch: 9.8 } },
-  name: "Tower 2", nameIt: "Torre 2",
-  links: [{ to: "10torre2", yaw: 69.9, pitch: 9.8 }, { to: "09torre1", yaw: 165.9, pitch: 10.1 }] },
+{ id: "tratturo3b", chapter: "trail", nightOnly: true,
+  night: { positions: { "40tratturo2": { yaw: -7.7, pitch: 5.3 }, "41tratturo3": { yaw: -176.8, pitch: -11.2 } },
+           view: { yaw: -7.7, pitch: 5.3 } },
+  name: "Drover's Trail 3", nameIt: "Tratturo 3",
+  links: [{ to: "40tratturo2", yaw: -7.7, pitch: 5.3 }, { to: "41tratturo3", yaw: -176.8, pitch: -11.2 }] },
 ```
 
 **Building night tiles** uses the same script, one flag added, and a folder to the side of `images/`:
@@ -269,19 +276,69 @@ viewpoints - check pixel content, not just the general impression, before assumi
 **Finding `night.positions` yaw/pitch values**: same tool as for day links - `index.html?edit=1`, in night mode, click
 the spot in the panorama.
 
-**Choosing mode**: there is no in-tour toggle - the welcome screen's *Start by day* / *Start by night* buttons are the
-only way in, each calling `setMode()` before navigating to that tour's own fixed starting place (`T.home.startScene`
-for day, `nightScenes[0].id` for night), so the visitor always lands on a real place, not a "nearest available" guess.
+**Choosing mode**: there is no in-tour toggle - `setMode()` is called once, before the first place loads, then the
+visit stays in that mode throughout. It navigates to that tour's own fixed starting place (`T.home.startScene` for
+day, `nightScenes[0].id` for night), so the visitor always lands on a real place, not a "nearest available" guess.
+On the public site only the day button on the welcome screen calls it (with `'day'`); the `/night` route (below) is
+what calls it with `'night'` instead.
 
 Night does **not** need to mirror day one-for-one: a chapter can have 2 night places where it has 5 day places, or a
 night-only place with nothing on the day side, and none of this affects the day tour.
+
+**Renumbering when a `nightOnly` place is added or removed between numbered ones**: a few places are named "Tower 2",
+"Tower 3" etc. purely by their position in a numbered sequence, not by anything in their `id`. Insert or remove a
+`nightOnly` place in the middle of such a sequence (see "Tower 2" having been removed from between Tower 1 and Tower
+3, for example) and everything after the gap needs its night `name`/`nameIt`/... renumbered by hand to close it - the
+site has no way to know these numbers are meant to stay consecutive, so a removed "Tower 2" silently leaves "Tower 3"
+and "Tower 4" with a gap in front of them unless you rename them down to "Tower 2" and "Tower 3" yourself.
+
+### The `/night` preview route
+
+The night tour is finished but not yet something the client wants visitors to stumble onto, so there's a second,
+unlisted way in, used only by the developer and client to keep reviewing it: **`/night`** (also reachable as
+`/night/` or `/night.html`). Visiting it looks exactly like the normal day welcome screen - same single, plain
+*Start the tour* button, no toggle anywhere - except that one button quietly starts the night tour instead, and the
+welcome screen's own background is the night aerial photo instead of the day one.
+
+This needed more than a redirect to behave well: redirecting to `index.html?tour=night` works, but the address bar
+then shows that, not `/night` - not something worth showing a client. So `night/index.html` is a **second, full copy**
+of `index.html` (own copy of the markup, `../`-prefixed links to the one shared `css/`, `js/`, `assets/`), which means
+the page never actually navigates away from `/night/`, address bar included - only the `#scene-id` hash changes as
+you move around, same as the main site. `night.html` (a plain file at the root, just a one-line redirect to `night/`)
+exists only as a fallback for a static host that doesn't resolve a bare `/night` (no trailing slash, no `.html`) to
+that folder's `index.html` on its own - most do, but not guaranteed on every possible host.
+
+Two things to remember because of this, both in `js/app.js`:
+
+- **`NIGHT_ROUTE`** is how the code tells it's being loaded this way - true either because `location.pathname` ends
+  in `/night/` (or `/night/index.html`), or (kept as a fallback) the URL has `?tour=night` in it. It decides: which
+  mode the welcome screen's one button starts (`startTourWithMode(NIGHT_ROUTE ? 'night' : 'day', this)`), whether its
+  disc icon shows a moon instead of a sun, which mode the page boots into by default, and which background the
+  welcome screen itself shows (`T.home.nightView` instead of `T.home.view`, in `showIntro()`).
+- **`BASE`** (`'../'` under `/night/`, `''` otherwise) gets prepended to every tile/thumbnail/gallery path the code
+  builds itself (`TILES_DIR`, `TILES_DIR_NIGHT`, and the two path builders inside `thumbSrc()`/`galleryFolder()`).
+  This is the one genuinely easy mistake to make here: `night/index.html`'s own `<link>`/`<script>` tags are easy to
+  remember to prefix with `../` by hand, but these paths are built in JavaScript as plain strings - miss prefixing
+  one of them with `BASE` and it silently 404s only from `/night/`, never from the main site, which makes it very
+  easy to not notice.
+
+**The real cost of this, worth knowing before touching either file**: `night/index.html` is a duplicate of
+`index.html`'s markup. Every future change to the page's HTML - a new button, a changed panel, anything in the
+`<body>` - has to be made in both files by hand, or `/night` quietly drifts out of sync with the real site. Logic
+changes (`js/app.js`, `js/scenes.js`, `css/style.css`) stay shared automatically, since both pages load the exact
+same files - only the HTML shell itself is duplicated.
+
+When the client is ready to make the night tour public, the actual flip is in "Day / night" above: delete the two
+CSS kill-switch rules (and the `hidden` attributes they pair with), and `/night` as a separate route becomes
+unnecessary - though there's no harm leaving it in place.
 
 ## 5. Deploying
 
 Upload these to any static host:
 
 ```
-index.html   css/   js/   vendor/   assets/  (fonts, tiles, tiles-night, thumbs, thumbs-night, gallery, gallery-night and the logos)
+index.html   night.html   night/   css/   js/   vendor/   assets/
+  (assets/: fonts, tiles, tiles-night, thumbs, thumbs-night, gallery, gallery-night and the logos)
 ```
 
 (almost all of it `assets/tiles/` and `assets/tiles-night/`). Do **not** upload `images/`, `images-night/`,
@@ -295,8 +352,10 @@ index.html   css/   js/   vendor/   assets/  (fonts, tiles, tiles-night, thumbs,
 
 ## 6. Status and known to-dos
 
-- **Night view is fully built**: 38 night places, their own Areas list and Previous / Next order, hotspots matched
-  against the client's reference tour, mode remembered across visits. See "Night view" above.
+- **Night view is fully built**: 40 night places, their own Areas list and Previous / Next order, hotspots matched
+  against the client's reference tour, mode remembered across visits. See "Night view" above. Not yet linked from the
+  public welcome screen on purpose (see "Day / night") - reachable today only through the `/night` preview route, for
+  the developer and client to review before it's made public.
 - **`12TorreDrone`** was replaced with the client-supplied `Torre04.jpg`. If a future replacement photo also has blank
   data at the very top / behind the camera, `tools/build_tiles.py` already fills that in (`FIXES`, keyed by file stem).
 - **`18Quercia2` (Oak Tree 2) was rebuilt from the reference tour's tiles** because the original file was missing. It is about the
@@ -307,7 +366,8 @@ index.html   css/   js/   vendor/   assets/  (fonts, tiles, tiles-night, thumbs,
 ## 7. Troubleshooting
 
 - **A change does not show up**: the browser cached the old files. Hard refresh (Ctrl+F5). When you deploy an update, also bump the
-  `?v=` number on the three script tags and the stylesheet link in `index.html` (currently `?v=36`) so visitors get the new files.
+  `?v=` number on the three script tags and the stylesheet link in `index.html` **and in `night/index.html`** (both
+  must match) so visitors get the new files.
 - **Blank screen / no tiles when opening `index.html`**: use a local server (section 1).
 - **A place does not appear in the menu**: its `id` does not match a folder in `assets/tiles/<area>/`, or it is marked `pending: true`.
 - **A hotspot leads nowhere**: the `to` id does not exist or the target is `pending`; hidden targets are skipped silently.
