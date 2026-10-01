@@ -95,7 +95,12 @@
   // its own names where a scene's night.name says so (falls back to the day name otherwise). A place
   // with no night photo simply never appears here, and a nightOnly place (no day photo) never appears
   // in `scenes` above. The two lists share ids only where the same real spot genuinely has both.
-  var nightScenes = all.filter(function (s) { return s.night; });
+  // homeOnly is excluded the same way `scenes` excludes it: panohome has a `night` field too (its own
+  // night background for the /night route's welcome screen), but it's a backdrop, never a real
+  // destination - if it ended up as nightScenes[0], "Start the tour" would try to go to the exact
+  // scene already showing behind the welcome screen, goTo() would no-op (from === target), and the
+  // button's loading animation would hang forever with no error.
+  var nightScenes = all.filter(function (s) { return s.night && !s.homeOnly; });
   nightScenes.forEach(function (s, i) { s.nightIndex = i; });
   function nightNm(s) { var suf = NAME_SUFFIX[lang]; return (suf && s.night['name' + suf]) || s.night.name || nm(s); }
   var chapterById = {};
