@@ -15,15 +15,45 @@
   // click handler further down. The query-string form still works too, in case anything ever links
   // straight to index.html?tour=night.
   var UNDER_NIGHT_FOLDER = /(^|\/)night\/(index\.html)?$/.test(location.pathname);
+  // Boot-time only: which FILE this page loaded from. Decides the welcome screen's one-time choices
+  // (which button starts which mode, the moon-vs-sun icon, forcing the initial mode) - see every use
+  // of NIGHT_ROUTE below. It does not change after load; routeNight (below) is the live counterpart
+  // that follows mode switches instead.
   var NIGHT_ROUTE = UNDER_NIGHT_FOLDER || /[?&]tour=night\b/.test(location.search);
-  // Styling hook only (see the .night-route rule in css/style.css) - gives the welcome screen's
-  // eyebrow and highlighted words their own yellow on this route, instead of the day screen's teal.
-  if (NIGHT_ROUTE) document.documentElement.classList.add('night-route');
-  // night/index.html is a real copy of this page one folder below the site root (see NIGHT_ROUTE
-  // above), so every plain relative path this file builds by hand (tiles, thumbnails, gallery photos -
-  // anything not already written directly into that HTML file) needs an extra "../" from there to
-  // still reach the one shared assets/ folder at the root, instead of a nonexistent night/assets/.
+  // night/index.html is a real copy of this page one folder below the site root, so every plain
+  // relative path this file builds by hand (tiles, thumbnails, gallery photos - anything not already
+  // written directly into that HTML file) needs an extra "../" from there to still reach the one
+  // shared assets/ folder at the root, instead of a nonexistent night/assets/. Mutable, not fixed at
+  // boot: syncRouteToMode() flips it live when the day/night toggle rewrites the address bar, so a
+  // tile fetched after that still resolves correctly without a real page reload.
   var BASE = UNDER_NIGHT_FOLDER ? '../' : '';
+  // The live version of "are we on /night" - starts equal to NIGHT_ROUTE, but (unlike it) follows the
+  // day/night toggle afterwards: switching mode mid-visit rewrites the address bar to match and flips
+  // this, see syncRouteToMode(), called from setMode(). This is what the .night-route CSS (the gold
+  // theme) and BASE actually key off from here on - NIGHT_ROUTE itself stays boot-only.
+  var routeNight = NIGHT_ROUTE;
+  document.documentElement.classList.toggle('night-route', routeNight);
+  // Rewrites the visible URL between its day and night forms (preserving the current hash/search, so
+  // the exact scene you're on survives), and flips BASE + the gold theme to match - all without a
+  // real navigation, so the toggle's smooth in-place scene swap (swapMode()) still works. Called from
+  // setMode() every time mode changes; no-ops if the route already matches.
+  function withoutNightFolder(p) { return p.replace(/(^|\/)night\/(index\.html)?$/, '$1') || '/'; }
+  function withNightFolder(p) {
+    var base = withoutNightFolder(p);
+    return /\/index\.html$/.test(base) ? base.replace(/index\.html$/, 'night/') : base.replace(/\/?$/, '/') + 'night/';
+  }
+  function syncRouteToMode() {
+    var wantNight = mode === 'night';
+    if (wantNight === routeNight) return;
+    routeNight = wantNight;
+    BASE = wantNight ? '../' : '';
+    document.documentElement.classList.toggle('night-route', wantNight);
+    var path = wantNight ? withNightFolder(location.pathname) : withoutNightFolder(location.pathname);
+    try { history.pushState(null, '', path + location.search + location.hash); } catch (e) {}
+    // Keeps the welcome screen honest even if the visitor never goes back to it this visit - it's
+    // cheap to update while hidden, and guarantees it's already correct the moment they do.
+    syncIntroButtons();
+  }
   var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // A failed tile request (dropped connection, a request queue getting saturated right after a
@@ -35,8 +65,6 @@
   // about a second instead of up to ten.
   var TILE_RETRY_DELAY = 1200;
 
-  var TILES_DIR = BASE + 'assets/tiles/';
-  var TILES_DIR_NIGHT = BASE + 'assets/tiles-night/';
   // 'day' or 'night' - which set of tiles getScene() / thumbSrc() build from. A place only has
   // night tiles when its scenes.js entry says `night: true` (tileBase() falls back to day otherwise).
   // See setMode() further down for what happens when the visitor switches. Remembered across visits,
@@ -83,10 +111,21 @@
     return str.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
   var slugToId = {};
-  function slugOf(id) { return slugify(nm(byId[id])); }
+  var nightSlugToId = {};
+  // Mode-aware: a scene whose night name differs from its day name (see nightSlugToId above) must put
+  // the name actually on screen into the address bar, not always the day one - otherwise the URL
+  // silently drifts to a different scene's slug the moment you're looking at the night name.
+  function slugOf(id) { var s = byId[id]; return slugify((mode === 'night' && s.night) ? nightNm(s) : nm(s)); }
+  // A day name and a night name can collide (two different places sharing the one display name in
+  // different modes - see nightSlugToId above), so which map wins has to follow the mode that's
+  // actually active right now, not a fixed priority - otherwise a reload can silently land you on
+  // the wrong, same-named place instead of the one whose link you actually followed.
   function idFromHash(h) {
     h = decodeURIComponent(h || '').toLowerCase();
-    return byId[h] ? h : (slugToId[h] || null);
+    if (byId[h]) return h;
+    var primary = mode === 'night' ? nightSlugToId : slugToId;
+    var fallback = mode === 'night' ? slugToId : nightSlugToId;
+    return primary[h] || fallback[h] || null;
   }
 
   /* ---------- data ---------- */
@@ -125,7 +164,7 @@
   });
   function tileBase(id) {
     var d = byId[id];
-    var base = (mode === 'night' && d.night) ? TILES_DIR_NIGHT : TILES_DIR;
+    var base = BASE + ((mode === 'night' && d.night) ? 'assets/tiles-night/' : 'assets/tiles/');
     return base + chapterById[d.chapter].folder + '/' + id;
   }
   function thumbSrc(scene) {
@@ -142,6 +181,16 @@
   scenes.forEach(function (s) {
     slugToId[slugify(s.name)] = s.id;
     if (s.nameIt) slugToId[slugify(s.nameIt)] = s.id;
+  });
+  // A night-renamed scene (its night.name/nameIt differs from its day name - e.g. the day tour's
+  // "Tratturo 3" becomes "Tratturo 4" at night to make room for a night-only extra stop) needs its
+  // own slug entry too, in its own map: the night name can collide with a *different* day scene's
+  // name (see nightScenes.forEach below), so a reload while on it must resolve by the mode that was
+  // active, not just whichever list happened to be built last.
+  nightScenes.forEach(function (s) {
+    var n = s.night.name || s.name, nIt = s.night.nameIt || s.nameIt;
+    nightSlugToId[slugify(n)] = s.id;
+    if (nIt) nightSlugToId[slugify(nIt)] = s.id;
   });
   all.forEach(function (s) {
     s.links = (s.links || []).filter(function (l) { return byId[l.to]; });
@@ -333,6 +382,16 @@
     loadSet(.05);
   }
   function loadDone() {
+    // #progress (the top bar) used to be hidden only by the stage's own renderComplete(stable=true)
+    // event - but when a scene's tiles are already fully prefetched before enter() switches to it
+    // (exactly what goTo()'s deferReveal does, used by the welcome-screen Start buttons), switchTo()
+    // introduces no new rendering instability for that event to later resolve from, so it can simply
+    // never fire again and the bar hangs forever - worse once autorotate kicks in a few seconds
+    // later, since a continuously moving camera may never report "stable" at all. loadDone() is
+    // already called reliably everywhere a scene finishes loading, with waitStable()'s own 6s
+    // timeout as an ultimate fallback - so hiding the bar here too, not only from renderComplete,
+    // guarantees it always gets hidden instead of depending on an event that isn't guaranteed to fire.
+    progress.hidden = true;
     loadSet(1);
     clearTimeout(loadTimer);
     loadTimer = setTimeout(function () {
@@ -665,6 +724,21 @@
     }
     return null; // no night tiles exist at all yet
   }
+  // The reverse case: a night-only place (no day photo) has no day equivalent to swap to. Day mode
+  // walks forward through the *night* tour order (wrapping) to the nearest place that does have one -
+  // mirrors resolveNightTarget() above, just searching nightScenes instead of scenes since the
+  // starting point only has a position in the night list.
+  function resolveDayTarget(id) {
+    var d = byId[id];
+    if (d && !d.nightOnly) return id;
+    var n = nightScenes.length;
+    var start = (d && d.nightIndex != null) ? d.nightIndex : 0;
+    for (var i = 1; i <= n; i++) {
+      var cand = nightScenes[(start + i) % n];
+      if (!cand.nightOnly) return cand.id;
+    }
+    return null; // no day tiles exist at all (shouldn't happen - scenes.length is always > 0)
+  }
   function currentViewDeg() {
     var v = viewer.view();
     return { yaw: deg(v.yaw()), pitch: deg(v.pitch()) };
@@ -688,9 +762,13 @@
   // "toggle hidden on purpose" rule in css/style.css. The switching logic itself is left fully
   // intact rather than deleted, so the toggle can be brought back just by removing that one CSS
   // rule, with nothing here to rewire.
-  function setMode(m) {
+  // deferSync: used by startTourWithMode() - the theme/URL switch is deliberately held off until the
+  // welcome screen is actually about to be replaced (see its own syncRouteToMode() call), so a click
+  // doesn't repaint the still-visible welcome screen's colours before its background has even changed.
+  function setMode(m, deferSync) {
     var prevMode = mode;
     mode = m;
+    if (!deferSync) syncRouteToMode();
     // Not persisted on the /night route - that mode is forced by the route itself every time (see
     // NIGHT_ROUTE above), not a visitor's own choice, so it shouldn't be remembered as one.
     if (!NIGHT_ROUTE) { try { localStorage.setItem('tour-mode', m); } catch (e) {} }
@@ -705,7 +783,9 @@
     refreshThumbs();
     if (!current || document.body.classList.contains('intro-on')) return;
     if (m === 'day') {
-      swapMode(current, currentViewDeg());
+      var dayTargetId = resolveDayTarget(current);
+      if (!dayTargetId || dayTargetId === current) swapMode(current, currentViewDeg());
+      else goTo(dayTargetId, { instant: true });
     } else {
       var targetId = resolveNightTarget(current);
       if (!targetId) toast(t('noNightYet'));
@@ -1014,6 +1094,10 @@
     document.body.classList.add('intro-on');
     visited = [];
     closePanels();
+    // Re-applied every time, not just once at boot - otherwise returning Home after toggling mode
+    // mid-visit would keep showing whichever mode was active when the page first loaded.
+    fillIntro();
+    syncIntroButtons();
     goTo(T.home.scene, { instant: true, noHash: true, view: (mode === 'night' && T.home.nightView) || T.home.view });
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
   }
@@ -1036,7 +1120,7 @@
   function startTourWithMode(m, btn) {
     if (startingTour) return;
     startingTour = true;
-    setMode(m);
+    setMode(m, true);
     var otherBtn = btn.id === 'introStartDay' ? $('#introStartNight') : $('#introStartDay');
     otherBtn.disabled = true;
     btn.classList.add('loading');
@@ -1060,14 +1144,34 @@
         btn.style.removeProperty('--p');
         otherBtn.disabled = false;
         startingTour = false;
+        syncRouteToMode();
         hideIntro();
       }
     });
   }
-  // On the /night route this button starts the night tour, so its icon should read as moon, not sun -
-  // text stays the plain "Start the tour" label either way (see NIGHT_ROUTE above).
-  if (NIGHT_ROUTE) $('#introStartDay .disc').classList.replace('disc-day', 'disc-night');
-  $('#introStartDay').addEventListener('click', function () { startTourWithMode(NIGHT_ROUTE ? 'night' : 'day', this); });
+  // Whether the welcome screen shows one disguised button or two labelled ones now follows the LIVE
+  // route (routeNight), not just whichever file first loaded - otherwise toggling mode away from the
+  // one you booted into and coming back to Home would freeze you on that file's original layout
+  // forever (its label, its disc icon, even its missing second button), only fixable by a reload.
+  // Solo mode: the one button starts whichever mode is currently active, and its disc matches it.
+  // Dual mode: this button always means "day" specifically - the separate Night button means "night" -
+  // so neither depends on live mode at all.
+  function syncIntroButtons() {
+    var solo = routeNight;
+    $('#introStartNight').hidden = solo;
+    var dayLbl = $('#introStartDay .lbl'), dayDisc = $('#introStartDay .disc');
+    if (solo) {
+      dayLbl.textContent = t('start');
+      dayDisc.classList.toggle('disc-night', mode === 'night');
+      dayDisc.classList.toggle('disc-day', mode === 'day');
+    } else {
+      dayLbl.textContent = t('startDayTour');
+      dayDisc.classList.add('disc-day');
+      dayDisc.classList.remove('disc-night');
+    }
+  }
+  syncIntroButtons();
+  $('#introStartDay').addEventListener('click', function () { startTourWithMode(routeNight ? mode : 'day', this); });
   $('#introStartNight').addEventListener('click', function () { startTourWithMode('night', this); });
 
   /* ---------- contact, menu, share, welcome text ---------- */
@@ -1156,7 +1260,7 @@
   function fillIntro() {
     var lead = $('#introLead');
     lead.textContent = '';
-    pick(T.home, NIGHT_ROUTE ? 'nightLead' : 'lead').split('*').forEach(function (part, i) {
+    pick(T.home, mode === 'night' ? 'nightLead' : 'lead').split('*').forEach(function (part, i) {
       if (!part) return;
       if (i % 2) { var em = document.createElement('em'); em.textContent = part; lead.appendChild(em); }
       else lead.appendChild(document.createTextNode(part));
