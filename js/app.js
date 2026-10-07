@@ -50,9 +50,6 @@
     document.documentElement.classList.toggle('night-route', wantNight);
     var path = wantNight ? withNightFolder(location.pathname) : withoutNightFolder(location.pathname);
     try { history.pushState(null, '', path + location.search + location.hash); } catch (e) {}
-    // Keeps the welcome screen honest even if the visitor never goes back to it this visit - it's
-    // cheap to update while hidden, and guarantees it's already correct the moment they do.
-    syncIntroButtons();
   }
   var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1097,7 +1094,6 @@
     // Re-applied every time, not just once at boot - otherwise returning Home after toggling mode
     // mid-visit would keep showing whichever mode was active when the page first loaded.
     fillIntro();
-    syncIntroButtons();
     goTo(T.home.scene, { instant: true, noHash: true, view: (mode === 'night' && T.home.nightView) || T.home.view });
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
   }
@@ -1149,29 +1145,10 @@
       }
     });
   }
-  // Whether the welcome screen shows one disguised button or two labelled ones now follows the LIVE
-  // route (routeNight), not just whichever file first loaded - otherwise toggling mode away from the
-  // one you booted into and coming back to Home would freeze you on that file's original layout
-  // forever (its label, its disc icon, even its missing second button), only fixable by a reload.
-  // Solo mode: the one button starts whichever mode is currently active, and its disc matches it.
-  // Dual mode: this button always means "day" specifically - the separate Night button means "night" -
-  // so neither depends on live mode at all.
-  function syncIntroButtons() {
-    var solo = routeNight;
-    $('#introStartNight').hidden = solo;
-    var dayLbl = $('#introStartDay .lbl'), dayDisc = $('#introStartDay .disc');
-    if (solo) {
-      dayLbl.textContent = t('start');
-      dayDisc.classList.toggle('disc-night', mode === 'night');
-      dayDisc.classList.toggle('disc-day', mode === 'day');
-    } else {
-      dayLbl.textContent = t('startDayTour');
-      dayDisc.classList.add('disc-day');
-      dayDisc.classList.remove('disc-night');
-    }
-  }
-  syncIntroButtons();
-  $('#introStartDay').addEventListener('click', function () { startTourWithMode(routeNight ? mode : 'day', this); });
+  // Welcome screen always shows both buttons now, on either route - introStartDay always starts the
+  // day tour, introStartNight always starts the night tour, regardless of which file loaded or which
+  // mode is currently active.
+  $('#introStartDay').addEventListener('click', function () { startTourWithMode('day', this); });
   $('#introStartNight').addEventListener('click', function () { startTourWithMode('night', this); });
 
   /* ---------- contact, menu, share, welcome text ---------- */
